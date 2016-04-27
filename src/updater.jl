@@ -75,7 +75,7 @@ function compute_alpha_edges(nodes, actback, policy, sim, pomdp::POMDPs.POMDP)
 
     for i in 1:length(nodes)
         n = nodes[i]
-        alpha_edges[i] = compute(sa, policy, sim, pomdp, n, ba)
+        alpha_edges[i] = compute(sa, policy, sim, pomdp, n, ba) # FIXME Slowwww
     end
     return alpha_edges
 end
@@ -85,7 +85,7 @@ function add_alpha_edges!(edges, actback, updater, pomdp::POMDPs.POMDP)
     new_alpha_edges = deepcopy(actback.alpha_edges)
     append!(new_alpha_edges, edges)
     # Prune
-    new_alpha_edges = prune_alpha_edges(new_alpha_edges, actback, pomdp)
+    new_alpha_edges = prune_alpha_edges(new_alpha_edges, actback, pomdp) # Slow?
 
     # check
     l1 = length(actback.alpha_edges)
@@ -116,10 +116,11 @@ Returns the best node and its value
 function find_best_node(nodes, policy, sim, pomdp::POMDPs.POMDP, belief)
     @assert length(nodes) > 0
     vs = zeros(length(nodes))
-    for i in 1:length(nodes)    # TODO Parallelize
-        n = nodes[i]
-        vs[i] = evaluate(belief, policy, sim, pomdp, n)
-    end
+    vs = pmap((n)->evaluate(belief, policy, sim, pomdp, n), nodes)
+    # for i in 1:length(nodes)
+    #     n = nodes[i]
+    #     vs[i] = evaluate(belief, policy, sim, pomdp, n)
+    # end
     (maxv, maxi) = findmax(vs)
     max_node = nodes[maxi]
     return (max_node, maxv)
@@ -151,7 +152,7 @@ function backup(bb::BeliefBeliefBackup, policy::MCVIPolicy, sim::MCVISimulator, 
     # Get new nodes from action backup
     new_nodes = Vector{MCVINode}(length(bb.act_backupers))
     for (i, actback) in enumerate(bb.act_backupers)
-        new_nodes[i] = backup(actback, policy, sim, pomdp, nodes) # Backup action
+        new_nodes[i] = backup(actback, policy, sim, pomdp, nodes) # Backup action, TODO Slowwww
     end
     print_with_color(:cyan, "backup action")
     println(" (nodes)")
