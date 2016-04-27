@@ -151,9 +151,9 @@ function dump_json(policy::MCVIPolicy, filename::AbstractString)
     root = policy.updater.root
     nodes = policy.updater.nodes
     open(filename, "w") do f
-        JSON.print(f, JSON.json(Dict(root.id => to_dict(root))))
+        write(f, JSON.json(Dict(root.id => to_dict(root))))
         for k in keys(nodes)
-            JSON.print(f, JSON.json(Dict(k => to_dict(nodes[k]))))
+            write(f, JSON.json(Dict(k => to_dict(nodes[k]))))
         end
     end
 end
