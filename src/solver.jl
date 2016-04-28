@@ -32,9 +32,8 @@ Hyperparameters:
     - `num_eval_belief` : Number of times to simulate while evaluating belief [default 5000?]
 """
 type MCVISolver <: POMDPs.Solver
-    # updater
     simulator::POMDPs.Simulator
-    root#::BeliefNode
+    root::Nullable{BeliefNode}
     rng::AbstractRNG
 
     n_iter::Int64
@@ -141,24 +140,24 @@ end
 """
 Search over belief
 """
-function search!(bn::BeliefNode, solver::MCVISolver, policy::MCVIPolicy, pomdp::POMDPs.POMDP, target_gap::Float64)
+function search!{S,A,O}(bn::BeliefNode, solver::MCVISolver, policy::MCVIPolicy, pomdp::POMDPs.POMDP{S,A,O}, target_gap::Float64)
     println("belief -> $(bn.obs) \t $(bn.upper) \t $(bn.lower)")
     if (bn.upper - bn.lower) > target_gap
         # Add child action nodes to belief node
         expand!(bn, solver, pomdp)
         max_upper = -Inf
-        local choice::ActionNode
+        local choice = Nullable{ActionNode{A}}()
         for ac in bn.children
             # Backup action
             backup!(ac, solver, pomdp)
             # Choose the one with max upper limit
             if max_upper < ac.upper
                 max_upper = ac.upper
-                choice = ac
+                choice = Nullable(ac)
             end
         end
         # Seach over action
-        search!(choice, solver, policy, pomdp, target_gap)
+        search!(get(choice), solver, policy, pomdp, target_gap)
     end
     # backup belief
     backup!(bn, solver, policy, pomdp)
@@ -175,18 +174,18 @@ function search!(an::ActionNode, solver::MCVISolver, policy::MCVIPolicy, pomdp::
     # Expand action
     expand!(an, solver, pomdp)
     max_gap = 0.0
-    local choice = nothing
+    local choice = Nullable{BeliefNode}()
     for b in an.children
         gap = b.upper - b.lower
         # Choose the belief that maximizes the gap bw upper and lower
         if gap > max_gap
             max_gap = gap
-            choice = b
+            choice = Nullable(b)
         end
     end
     # If we found anything that improved the difference
-    if choice != nothing
-        search!(choice, solver, policy, pomdp, target_gap/discount(pomdp))
+    if !isnull(choice)
+        search!(get(choice), solver, policy, pomdp, target_gap/discount(pomdp))
     else
         println("Gap closed!")
     end
@@ -195,7 +194,7 @@ function search!(an::ActionNode, solver::MCVISolver, policy::MCVIPolicy, pomdp::
 end
 
 function solve(solver::MCVISolver, pomdp::POMDPs.POMDP, policy::MCVIPolicy=create_policy(solver, pomdp))
-    if solver.root == nothing
+    if isnull(solver.root)
         initialize_root!(solver, pomdp)
     end
     # Gap between upper and lower
@@ -205,14 +204,14 @@ function solve(solver::MCVISolver, pomdp::POMDPs.POMDP, policy::MCVIPolicy=creat
     end
     # Search
     for i in 1:solver.n_iter
-        search!(solver.root, solver, policy, pomdp, target_gap) # Here solver.root is a BeliefNode
-        policy.root = solver.root.best_node             # Here policy.root is a MCVINode
+        search!(get(solver.root), solver, policy, pomdp, target_gap) # Here solver.root is a BeliefNode
+        policy.root = get(solver.root).best_node             # Here policy.root is a MCVINode
         dump_json(policy, "/tmp/policy.json")
-        if (solver.root.upper - solver.root.lower) < 0.1
+        if (get(solver.root).upper - get(solver.root).lower) < 0.1
             break
         end
         print_with_color(:green, "iter $(i) \t")
-        println("upper: $(solver.root.upper) \t lower: $(solver.root.lower)")
+        println("upper: $(get(solver.root).upper) \t lower: $(get(solver.root).lower)")
     end
     return policy
 end
