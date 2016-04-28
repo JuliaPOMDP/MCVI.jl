@@ -36,8 +36,8 @@ discount(p::LightDark1D) = p.discount_factor
 
 isterminal(::LightDark1D, act::Int64) = act == 0
 
-function initial_state(p::LightDark1D)
-    return LightDark1DState(0, 2+Base.randn(p.rng)*3)
+function initial_state(p::LightDark1D, rng::AbstractRNG)
+    return LightDark1DState(0, 2+Base.randn(rng)*3)
 end
 
 function generate_sr{LightDark1DState}(p::LightDark1D, s::LightDark1DState, a::Int64, rng::AbstractRNG)
