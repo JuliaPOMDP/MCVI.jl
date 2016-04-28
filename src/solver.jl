@@ -33,8 +33,8 @@ Hyperparameters:
 """
 type MCVISolver <: POMDPs.Solver
     # updater
-    simulator
-    root::BeliefNode
+    simulator::POMDPs.Simulator
+    root#::BeliefNode
     rng::AbstractRNG
 
     n_iter::Int64
@@ -43,14 +43,13 @@ type MCVISolver <: POMDPs.Solver
     num_state::Int64
     num_prune_obs::Int64
     num_eval_belief::Int64
+    MCVISolver() = new()
+    MCVISolver(sim, root, rng, n_iter, nb, ob, ns, npo, neb) = new(sim, root, rng, n_iter, nb, ob, ns, npo, neb)
 end
 
-function MCVISolver(pomdp::POMDPs.POMDP, simulator::MCVISimulator, rng::AbstractRNG, n_iter::Int64, num_belief::Int64, obs_branch::Int64, num_state::Int64, num_prune_obs::Int64, num_eval_belief::Int64)
-    b0 = initial_belief(pomdp)  # TODO Send num_belief
-    upper = upperbound(b0, pomdp)
-    lower = lowerbound(b0, pomdp)
-    root = BeliefNode(nothing, b0, upper, lower, nothing, Vector{TreeNode}())
-    return MCVISolver(simulator, root, rng, n_iter, num_belief, obs_branch, num_state, num_prune_obs, num_eval_belief)
+function initialize_root!{S,A,O}(solver::MCVISolver, pomdp::POMDPs.POMDP{S,A,O})
+    b0 = initial_belief(pomdp)
+    solver.root = BeliefNode(nothing, b0, upperbound(b0, pomdp), lowerbound(b0, pomdp), nothing, Vector{TreeNode}())
 end
 
 create_policy(::MCVISolver, p::POMDPs.POMDP) = MCVIPolicy(p)
@@ -196,6 +195,9 @@ function search!(an::ActionNode, solver::MCVISolver, policy::MCVIPolicy, pomdp::
 end
 
 function solve(solver::MCVISolver, pomdp::POMDPs.POMDP, policy::MCVIPolicy=create_policy(solver, pomdp))
+    if solver.root == nothing
+        initialize_root!(solver, pomdp)
+    end
     # Gap between upper and lower
     target_gap = 0.0
     if policy.updater == nothing
