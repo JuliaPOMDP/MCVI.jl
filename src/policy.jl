@@ -4,10 +4,7 @@ type AlphaEdge
 end
 Base.hash(a::AlphaEdge, h::UInt64=zero(UInt64)) = hash(a.vec, hash(a.id, h))
 
-abstract PolicyState
-abstract PolicyStateUpdater <: POMDPs.Updater{PolicyState}
-
-type MCVINode <: PolicyState
+type MCVINode
     id::UInt64
     act::Any
     states::Any
@@ -22,7 +19,7 @@ copy(n::MCVINode) = MCVINode(n.id, n.act, n.states, n.alpha_edges)
 """
 Returns the next node in the policygraph
 """
-type MCVIUpdater{S,A} <: PolicyStateUpdater
+type MCVIUpdater{S,A} <: POMDPs.Updater{MCVINode}
     root
     nodes::Dict{UInt64, MCVINode}
     nodes_queue::Vector{MCVINode}
