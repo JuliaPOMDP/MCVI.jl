@@ -36,14 +36,13 @@ function test_dummy_graph()
 
     sumv = 0.0
     for i in 1:1000
-        ss = initial_state(p)
+        ss = initial_state(p, p.rng)
         sim.init_state = ss
         sumv += MCVI.simulate(sim, p, policy, up, up.root)
     end
     sumv /= 1000
     return abs(sumv - (-3.0)) <= 1
 end
-
 
 function test_dummy_graph2()
     pomdp = LightDark1D()
@@ -76,7 +75,7 @@ function test_dummy_graph2()
     dump_json(policy, "/tmp/test_policy.json")
     sumv = 0.0
     for i in 1:1000
-        ss = initial_state(pomdp)
+        ss = initial_state(pomdp, pomdp.rng)
         sim.init_state = ss
         sumv += MCVI.simulate(sim, pomdp, policy, up, up.root)
     end
