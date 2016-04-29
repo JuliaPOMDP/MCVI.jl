@@ -8,12 +8,12 @@ function test_backup()
 
     sim = MCVISimulator()
 
-    n, _ = MCVI.backup(b0, policy, sim, p, 500)
+    n, _ = MCVI.backup(b0, policy, sim, p, 500, 1000, 500)
     MCVI.addnode!(policy.updater, n)
     policy.updater.root = n
 
     v1 = MCVI.evaluate(policy, sim, p)
-    n, _ = MCVI.backup(b0, policy, sim, p, 500)
+    n, _ = MCVI.backup(b0, policy, sim, p, 500, 1000, 500)
     MCVI.addnode!(policy.updater, n)
     policy.updater.root = n
 

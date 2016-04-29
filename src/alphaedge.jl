@@ -28,9 +28,9 @@ end
 """
 Evaluate belief
 """
-function evaluate(b::MCVIBelief, policy::POMDPs.Policy, sim::MCVISimulator, pomdp::POMDPs.POMDP, n::MCVINode)
+function evaluate(b::MCVIBelief, policy::POMDPs.Policy, sim::MCVISimulator, pomdp::POMDPs.POMDP, n::MCVINode, num_eval_belief::Int64)
     # TODO num_eval_belief, possibly pomdp.config/solver
-    num_eval_belief = 500
+    # num_eval_belief = 500
     val::Float64 = 0.0
     for i in 1:num_eval_belief
         s = rand(sim.rng, b)    # This is the initial state stuff :/

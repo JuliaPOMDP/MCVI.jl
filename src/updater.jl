@@ -32,12 +32,12 @@ function initialize_belief_backup!{S}(bb::MCVIBeliefBackup, pomdp::POMDPs.POMDP{
     return bb
 end
 
-function prune_alpha_edges{S,A}(alpha_edges, actback::MCVIActionBackup{S,A}, pomdp::POMDPs.POMDP)
+function prune_alpha_edges{S,A}(alpha_edges, actback::MCVIActionBackup{S,A}, pomdp::POMDPs.POMDP, num_prune_obs::Int64)
     ba = actback.ba
     sa = actback.sa
     keep = Vector{Bool}(length(alpha_edges))
     #TODO: num_prune_obs : pomdp/solver config
-    num_prune_obs = 1000
+    # num_prune_obs = 1000
     for i in 1:num_prune_obs
         # Sample observation from belief
         obs = generate_o(pomdp, nothing, nothing, rand(pomdp.rng, ba), pomdp.rng) # TODO: rng?
@@ -79,11 +79,11 @@ function compute_alpha_edges{S,A}(nodes::Vector{MCVINode}, actback::MCVIActionBa
     return alpha_edges
 end
 
-function add_alpha_edges!{S,A}(actback::MCVIActionBackup{S,A}, edges, updater::MCVIUpdater, pomdp::POMDPs.POMDP)
+function add_alpha_edges!{S,A}(actback::MCVIActionBackup{S,A}, edges, updater::MCVIUpdater, pomdp::POMDPs.POMDP, num_prune_obs::Int64)
     new_alpha_edges = deepcopy(actback.alpha_edges)
     append!(new_alpha_edges, edges)
     # Prune
-    new_alpha_edges = prune_alpha_edges(new_alpha_edges, actback, pomdp) # Slow?
+    new_alpha_edges = prune_alpha_edges(new_alpha_edges, actback, pomdp, num_prune_obs) # Slow?
 
     # check
     l1 = length(actback.alpha_edges)
@@ -100,21 +100,21 @@ end
 """
 Backup action
 """
-function backup{S,A}(actback::MCVIActionBackup{S,A}, policy::MCVIPolicy, sim::MCVISimulator, pomdp::POMDPs.POMDP, nodes)
+function backup{S,A}(actback::MCVIActionBackup{S,A}, policy::MCVIPolicy, sim::MCVISimulator, pomdp::POMDPs.POMDP, nodes, num_prune_obs::Int64)
     # Compute alpha edges
     new_alpha_edges = compute_alpha_edges(nodes, actback, policy, sim, pomdp)
     # Add alpha edges
-    n = add_alpha_edges!(actback, new_alpha_edges, policy.updater, pomdp)
+    n = add_alpha_edges!(actback, new_alpha_edges, policy.updater, pomdp, num_prune_obs)
     return n
 end
 
 """
 Returns the best node and its value
 """
-function find_best_node(nodes, policy, sim, pomdp::POMDPs.POMDP, belief)
+function find_best_node(nodes::Vector{MCVINode}, policy::MCVIPolicy, sim::MCVISimulator, pomdp::POMDPs.POMDP, belief::MCVIBelief, num_eval_belief::Int64)
     @assert length(nodes) > 0
     vs = zeros(length(nodes))
-    vs = pmap((n)->evaluate(belief, policy, sim, pomdp, n), nodes)
+    vs = pmap((n)->evaluate(belief, policy, sim, pomdp, n, num_eval_belief), nodes)
     # for i in 1:length(nodes)
     #     n = nodes[i]
     #     vs[i] = evaluate(belief, policy, sim, pomdp, n)
@@ -127,8 +127,8 @@ end
 """
 Update belief backup's best node
 """
-function update!(bb::MCVIBeliefBackup, nodes::Vector{MCVINode}, pomdp::POMDPs.POMDP, policy::MCVIPolicy, sim::MCVISimulator, eps::Float64)
-    (n, v) = find_best_node(nodes, policy, sim, pomdp, bb.belief)
+function update!(bb::MCVIBeliefBackup, nodes::Vector{MCVINode}, pomdp::POMDPs.POMDP, policy::MCVIPolicy, sim::MCVISimulator, eps::Float64, num_eval_belief::Int64)
+    (n, v) = find_best_node(nodes, policy, sim, pomdp, bb.belief, num_eval_belief)
     if bb.maxv + eps < v
         bb.maxv = v
         bb.max_node = n
@@ -138,32 +138,32 @@ end
 """
 Backup belief
 """
-function backup(bb::MCVIBeliefBackup, policy::MCVIPolicy, sim::MCVISimulator, pomdp::POMDPs.POMDP)
+function backup(bb::MCVIBeliefBackup, policy::MCVIPolicy, sim::MCVISimulator, pomdp::POMDPs.POMDP, num_prune_obs::Int64, num_eval_belief::Int64)
     # bb = MCVIBeliefBackup(belief, pomdp)
     # Get newer nodes
     nodes = policy.updater.nodes_queue[bb.last_index:end]
     # Update best belief
-    update!(bb, nodes, pomdp, policy, sim, -0.1) # Try \epsilon less
+    update!(bb, nodes, pomdp, policy, sim, -0.1, num_eval_belief) # Try \epsilon less
     print_with_color(:cyan, "update")
     println(" (nodes)")
 
     # Get new nodes from action backup
     new_nodes = Vector{MCVINode}(length(bb.act_backupers))
     for (i, actback) in enumerate(bb.act_backupers)
-        new_nodes[i] = backup(actback, policy, sim, pomdp, nodes) # Backup action, TODO Slowwww
+        new_nodes[i] = backup(actback, policy, sim, pomdp, nodes, num_prune_obs) # Backup action, TODO Slowwww
     end
     print_with_color(:cyan, "backup action")
     println(" (nodes)")
 
     bb.last_index += length(nodes)
-    update!(bb, new_nodes, pomdp, policy, sim, +0.1) # Try \epsilon more
+    update!(bb, new_nodes, pomdp, policy, sim, +0.1, num_eval_belief) # Try \epsilon more
 
     return (bb.max_node, bb.maxv)                     # TODO return bb ?
 end
 
-function backup(belief::MCVIBelief, policy::MCVIPolicy, sim::MCVISimulator, pomdp::POMDPs.POMDP, num_state::Int64)
+function backup(belief::MCVIBelief, policy::MCVIPolicy, sim::MCVISimulator, pomdp::POMDPs.POMDP, num_state::Int64, num_prune_obs::Int64, num_eval_belief::Int64)
     # Belief backup struct
     bb = MCVIBeliefBackup(belief)
     initialize_belief_backup!(bb, pomdp, num_state)
-    return backup(bb, policy, sim, pomdp)
+    return backup(bb, policy, sim, pomdp, num_prune_obs, num_eval_belief)
 end

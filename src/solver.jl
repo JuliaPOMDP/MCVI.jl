@@ -115,7 +115,8 @@ function backup!(bn::BeliefNode, solver::MCVISolver, policy::MCVIPolicy, pomdp::
     end
 
     # Increase lower value
-    policy_node, node_val = backup(bn.belief, policy, solver.simulator, pomdp, solver.num_state) # Backup belief
+    policy_node, node_val = backup(bn.belief, policy, solver.simulator, pomdp, solver.num_state,
+                                   solver.num_prune_obs, solver.num_eval_belief) # Backup belief
     print_with_color(:magenta, "backup")
     println(" (belief) -> $(node_val) \t $(bn.lower)")
     if node_val > bn.lower
