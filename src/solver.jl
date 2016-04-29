@@ -4,12 +4,12 @@ end
 
 abstract TreeNode
 
-type BeliefNode <: TreeNode
-    obs
+type BeliefNode{O} <: TreeNode
+    obs::Nullable{O}
     belief:: MCVIBelief
     upper::Reward
     lower::Reward
-    best_node                   # MCVINode
+    best_node::Nullable{MCVINode}
     children::Vector{TreeNode}
 end
 
@@ -20,6 +20,9 @@ type ActionNode{A} <: TreeNode
     imm_reward::Reward
     children::Vector{BeliefNode}
 end
+
+BeliefNode{O}(obs::Nullable{O}, b::MCVIBelief, u::Reward, l::Reward, bn::Nullable{MCVINode}, c::Vector{TreeNode}) = BeliefNode{O}(obs, b, u, l, bn, c)
+BeliefNode{O,A}(obs::Nullable{O}, b::MCVIBelief, u::Reward, l::Reward, bn::Nullable{MCVINode}, c::Vector{ActionNode{A}}) = BeliefNode{O}(obs, b, u, l, bn, c)
 
 """
 
@@ -48,7 +51,7 @@ end
 
 function initialize_root!{S,A,O}(solver::MCVISolver, pomdp::POMDPs.POMDP{S,A,O})
     b0 = initial_belief(pomdp, solver.num_particles)  # TODO: send num_particles
-    solver.root = BeliefNode(nothing, b0, upperbound(b0, pomdp), lowerbound(b0, pomdp), nothing, Vector{TreeNode}())
+    solver.root = BeliefNode(Nullable{O}(), b0, upperbound(b0, pomdp), lowerbound(b0, pomdp), Nullable{MCVINode}(), Vector{TreeNode}())
 end
 
 create_policy(::MCVISolver, p::POMDPs.POMDP) = MCVIPolicy(p)
@@ -81,7 +84,7 @@ end
 """
 Expand actions (Add new belief nodes)
 """
-function expand!(an::ActionNode, solver::MCVISolver, pomdp::POMDPs.POMDP)
+function expand!{A}(an::ActionNode{A}, solver::MCVISolver, pomdp::POMDPs.POMDP)
     if !isempty(an.children)
         return nothing
     end
@@ -94,7 +97,7 @@ function expand!(an::ActionNode, solver::MCVISolver, pomdp::POMDPs.POMDP)
         upper = upperbound(bel, pomdp)
         lower = lowerbound(bel, pomdp)
 
-        belief_node = BeliefNode(obs, bel, upper, lower, nothing, Vector{ActionNode}())
+        belief_node = BeliefNode(Nullable(obs), bel, upper, lower, Nullable{MCVINode}(), Vector{ActionNode{A}}())
         push!(an.children, belief_node)
     end
 end
@@ -145,7 +148,15 @@ end
 Search over belief
 """
 function search!{S,A,O}(bn::BeliefNode, solver::MCVISolver, policy::MCVIPolicy, pomdp::POMDPs.POMDP{S,A,O}, target_gap::Float64)
-    println("belief -> $(bn.obs) \t $(bn.upper) \t $(bn.lower)")
+    try
+        println("belief -> $get(bn.obs) \t $(bn.upper) \t $(bn.lower)")
+    catch e
+        if isa(e, NullException)
+            println("belief -> nothing \t $(bn.upper) \t $(bn.lower)")
+        else
+            throw(e)
+        end
+    end
     if (bn.upper - bn.lower) > target_gap
         # Add child action nodes to belief node
         expand!(bn, solver, pomdp)
@@ -197,6 +208,9 @@ function search!(an::ActionNode, solver::MCVISolver, policy::MCVIPolicy, pomdp::
     backup!(an, solver, pomdp)
 end
 
+"""
+Solve function
+"""
 function solve(solver::MCVISolver, pomdp::POMDPs.POMDP, policy::MCVIPolicy=create_policy(solver, pomdp))
     if isnull(solver.root)
         initialize_root!(solver, pomdp)
@@ -209,7 +223,7 @@ function solve(solver::MCVISolver, pomdp::POMDPs.POMDP, policy::MCVIPolicy=creat
     # Search
     for i in 1:solver.n_iter
         search!(get(solver.root), solver, policy, pomdp, target_gap) # Here solver.root is a BeliefNode
-        policy.root = get(solver.root).best_node             # Here policy.root is a MCVINode
+        policy.root = get(get(solver.root).best_node)             # Here policy.root is a MCVINode
         dump_json(policy, "/tmp/policy.json")
         if (get(solver.root).upper - get(solver.root).lower) < 0.1
             break
