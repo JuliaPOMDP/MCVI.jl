@@ -1,4 +1,4 @@
-type BeliefActionBackup{S,A}
+type MCVIActionBackup{S,A}
     act::A
     ba::MCVIBelief
     sa::Vector{S}
@@ -9,9 +9,9 @@ type BeliefActionBackup{S,A}
 end
 
 
-type BeliefBeliefBackup
+type MCVIBeliefBackup
     belief::MCVIBelief
-    act_backupers::Vector{BeliefActionBackup}
+    act_backupers::Vector{MCVIActionBackup}
     last_index::Int64
     max_node
     maxv::Float64

@@ -25,7 +25,7 @@ end
 
 Hyperparameters:
     - `n_iter`          : Number of iterations
-    - `num_belief`      : Number of belief particles to be used
+    - `num_particles`   : Number of belief particles to be used
     - `obs_branch`      : Branching factor [default 8?]
     - `num_state`       : Number of states to sample from belief [default 500?]
     - `num_prune_obs`   : Number of times to sample observation while pruning alpha edges [default 1000?]
@@ -37,13 +37,13 @@ type MCVISolver <: POMDPs.Solver
     rng::AbstractRNG
 
     n_iter::Int64
-    num_belief::Int64
+    num_particles::Int64
     obs_branch::Int64
     num_state::Int64
     num_prune_obs::Int64
     num_eval_belief::Int64
     MCVISolver() = new()
-    MCVISolver(sim, root, rng, n_iter, nb, ob, ns, npo, neb) = new(sim, root, rng, n_iter, nb, ob, ns, npo, neb)
+    MCVISolver(sim, root, rng, n_iter, nbp, ob, ns, npo, neb) = new(sim, root, rng, n_iter, nbp, ob, ns, npo, neb)
 end
 
 function initialize_root!{S,A,O}(solver::MCVISolver, pomdp::POMDPs.POMDP{S,A,O})
