@@ -56,7 +56,7 @@ create_policy(::MCVISolver, p::POMDPs.POMDP) = MCVIPolicy(p)
 """
 Expand beliefs (Add new action nodes)
 """
-function expand!(bn::BeliefNode, solver, pomdp)
+function expand!(bn::BeliefNode, solver::MCVISolver, pomdp::POMDPs.POMDP)
     if !isempty(bn.children)
         return nothing
     end
@@ -78,7 +78,10 @@ function expand!(bn::BeliefNode, solver, pomdp)
     end
 end
 
-function expand!(an::ActionNode, solver, pomdp)
+"""
+Expand actions (Add new belief nodes)
+"""
+function expand!(an::ActionNode, solver::MCVISolver, pomdp::POMDPs.POMDP)
     if !isempty(an.children)
         return nothing
     end

@@ -32,7 +32,7 @@ function initialize_belief_backup!{S}(bb::MCVIBeliefBackup, pomdp::POMDPs.POMDP{
     return bb
 end
 
-function prune_alpha_edges(alpha_edges, actback, pomdp)
+function prune_alpha_edges{S,A}(alpha_edges, actback::MCVIActionBackup{S,A}, pomdp::POMDPs.POMDP)
     ba = actback.ba
     sa = actback.sa
     keep = Vector{Bool}(length(alpha_edges))
@@ -68,11 +68,10 @@ end
 """
 Calls the least square compute function
 """
-function compute_alpha_edges(nodes, actback, policy, sim, pomdp::POMDPs.POMDP)
+function compute_alpha_edges{S,A}(nodes::Vector{MCVINode}, actback::MCVIActionBackup{S,A}, policy::MCVIPolicy, sim::MCVISimulator, pomdp::POMDPs.POMDP)
     ba = actback.ba
     sa = actback.sa
     alpha_edges = Vector{AlphaEdge}(length(nodes))
-
     for i in 1:length(nodes)
         n = nodes[i]
         alpha_edges[i] = compute(sa, policy, sim, pomdp, n, ba) # FIXME Slowwww
@@ -80,8 +79,7 @@ function compute_alpha_edges(nodes, actback, policy, sim, pomdp::POMDPs.POMDP)
     return alpha_edges
 end
 
-function add_alpha_edges!(edges, actback, updater, pomdp::POMDPs.POMDP)
-    # FIXME side effects on actback?
+function add_alpha_edges!{S,A}(actback::MCVIActionBackup{S,A}, edges, updater::MCVIUpdater, pomdp::POMDPs.POMDP)
     new_alpha_edges = deepcopy(actback.alpha_edges)
     append!(new_alpha_edges, edges)
     # Prune
@@ -102,11 +100,11 @@ end
 """
 Backup action
 """
-function backup(actback, policy, sim, pomdp, nodes)
+function backup{S,A}(actback::MCVIActionBackup{S,A}, policy::MCVIPolicy, sim::MCVISimulator, pomdp::POMDPs.POMDP, nodes)
     # Compute alpha edges
     new_alpha_edges = compute_alpha_edges(nodes, actback, policy, sim, pomdp)
     # Add alpha edges
-    n = add_alpha_edges!(new_alpha_edges, actback, policy.updater, pomdp)
+    n = add_alpha_edges!(actback, new_alpha_edges, policy.updater, pomdp)
     return n
 end
 
@@ -129,7 +127,7 @@ end
 """
 Update belief backup's best node
 """
-function update!(bb::BeliefBeliefBackup, nodes::Vector{MCVINode}, pomdp::POMDPs.POMDP, policy::MCVIPolicy, sim::MCVISimulator, eps::Float64)
+function update!(bb::MCVIBeliefBackup, nodes::Vector{MCVINode}, pomdp::POMDPs.POMDP, policy::MCVIPolicy, sim::MCVISimulator, eps::Float64)
     (n, v) = find_best_node(nodes, policy, sim, pomdp, bb.belief)
     if bb.maxv + eps < v
         bb.maxv = v
