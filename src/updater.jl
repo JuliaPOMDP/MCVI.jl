@@ -17,16 +17,16 @@ type MCVIBeliefBackup
     maxv::Float64
 end
 
-function BeliefBeliefBackup(belief, pomdp::POMDPs.POMDP)
-    num_state = 5000            # TODO get num_state from pomdp
-    bb = BeliefBeliefBackup(belief, Vector{BeliefActionBackup}(), 1, nothing, -Inf)
+MCVIBeliefBackup(belief::MCVIBelief) = MCVIBeliefBackup(belief, Vector{MCVIActionBackup}(), 1, nothing, -Inf)
+
+function initialize_belief_backup!{S}(bb::MCVIBeliefBackup, pomdp::POMDPs.POMDP{S}, num_state::Int64)
     for a in iterator(actions(pomdp))
         if a == init_lower_action(pomdp)
             continue
         end
-        pb = next(belief, a, pomdp)
-        sa = [rand(pomdp.rng, pb) for i in 1:num_state] # TODO get num_state from pomdp
-        ac = BeliefActionBackup(a, pb, sa, Vector{AlphaEdge}(), nothing, nothing)
+        pb = next(bb.belief, a, pomdp)
+        sa = S[rand(pomdp.rng, pb) for i in 1:num_state]
+        ac = MCVIActionBackup(a, pb, sa, Vector{AlphaEdge}(), nothing, nothing)
         push!(bb.act_backupers, ac)
     end
     return bb
@@ -165,6 +165,6 @@ end
 
 function backup(belief::MCVIBelief, policy::MCVIPolicy, sim::MCVISimulator, pomdp::POMDPs.POMDP)
     # Belief backup struct
-    bb = BeliefBeliefBackup(belief, pomdp)
+    bb = MCVIBeliefBackup(belief)
     return backup(bb, policy, sim, pomdp)
 end
