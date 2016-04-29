@@ -10,21 +10,21 @@ function simulate(sim::MCVISimulator, pomdp::POMDPs.POMDP, policy::MCVIPolicy, u
     if sim.init_state != nothing
         s = sim.init_state
     else
-        s = initial_state(pomdp, pomdp.rng)
+        s = initial_state(pomdp, sim.rng)
     end
     for i in 1:sim.times
         n = copy(initial_node)
         disc::Float64 = 1
         sumr::Reward = 0
         while true
-            sprime, r = generate_sr(pomdp, s, n.act, pomdp.rng)
+            sprime, r = generate_sr(pomdp, s, n.act, sim.rng)
             disc *= discount(pomdp)
             sumr += r*disc
             s = sprime
             if !hasnext(n)
                 break
             end
-            obs = generate_o(pomdp, nothing, nothing, s, pomdp.rng)
+            obs = generate_o(pomdp, nothing, nothing, s, sim.rng)
             n = update(updater, n, n.act, obs)
         end
         sum_reward += sumr
@@ -43,7 +43,7 @@ function simulate(sim::MCVISimulator, pomdp::POMDPs.POMDP, policy::POMDPs.Policy
     if sim.init_state != nothing
         s = sim.init_state
     else
-        s = initial_state(pomdp, pomdp.rng)
+        s = initial_state(pomdp, sim.rng)
     end
     for i in 1:sim.times
         b = initial_belief
@@ -54,12 +54,12 @@ function simulate(sim::MCVISimulator, pomdp::POMDPs.POMDP, policy::POMDPs.Policy
             if isterminal(pomdp, a)
                 break
             end
-            sprime, r = generate_sr(pomdp, s, a, pomdp.rng)
+            sprime, r = generate_sr(pomdp, s, a, sim.rng)
             disc *= discount(pomdp)
             sumr += r*disc
             s = sprime
-            obs = generate_o(pomdp, nothing, nothing, s, pomdp.rng)
-            b = next(b, a, pomdp)
+            obs = generate_o(pomdp, nothing, nothing, s, sim.rng)
+            b = next(b, a, pomdp, sim.rng)
             b = next(b, obs, pomdp)
         end
         sum_reward += sumr

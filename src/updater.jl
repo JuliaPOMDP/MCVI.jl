@@ -19,20 +19,20 @@ end
 
 MCVIBeliefBackup(belief::MCVIBelief) = MCVIBeliefBackup(belief, Vector{MCVIActionBackup}(), 1, nothing, -Inf)
 
-function initialize_belief_backup!{S}(bb::MCVIBeliefBackup, pomdp::POMDPs.POMDP{S}, num_state::Int64)
+function initialize_belief_backup!{S}(bb::MCVIBeliefBackup, pomdp::POMDPs.POMDP{S}, num_state::Int64, rng::AbstractRNG)
     for a in iterator(actions(pomdp))
         if a == init_lower_action(pomdp)
             continue
         end
-        pb = next(bb.belief, a, pomdp)
-        sa = S[rand(pomdp.rng, pb) for i in 1:num_state]
+        pb = next(bb.belief, a, pomdp, rng)
+        sa = S[rand(rng, pb) for i in 1:num_state]
         ac = MCVIActionBackup(a, pb, sa, Vector{AlphaEdge}(), nothing, nothing)
         push!(bb.act_backupers, ac)
     end
     return bb
 end
 
-function prune_alpha_edges{S,A}(alpha_edges, actback::MCVIActionBackup{S,A}, pomdp::POMDPs.POMDP, num_prune_obs::Int64)
+function prune_alpha_edges{S,A}(alpha_edges, actback::MCVIActionBackup{S,A}, pomdp::POMDPs.POMDP, num_prune_obs::Int64, rng::AbstractRNG)
     ba = actback.ba
     sa = actback.sa
     keep = Vector{Bool}(length(alpha_edges))
@@ -40,7 +40,7 @@ function prune_alpha_edges{S,A}(alpha_edges, actback::MCVIActionBackup{S,A}, pom
     # num_prune_obs = 1000
     for i in 1:num_prune_obs
         # Sample observation from belief
-        obs = generate_o(pomdp, nothing, nothing, rand(pomdp.rng, ba), pomdp.rng) # TODO: rng?
+        obs = generate_o(pomdp, nothing, nothing, rand(rng, ba), rng)
         obswt = zeros(length(sa))
         for (k,s) in enumerate(sa)
             obswt[k] = pdf(s, obs)
@@ -79,11 +79,11 @@ function compute_alpha_edges{S,A}(nodes::Vector{MCVINode}, actback::MCVIActionBa
     return alpha_edges
 end
 
-function add_alpha_edges!{S,A}(actback::MCVIActionBackup{S,A}, edges, updater::MCVIUpdater, pomdp::POMDPs.POMDP, num_prune_obs::Int64)
+function add_alpha_edges!{S,A}(actback::MCVIActionBackup{S,A}, edges, updater::MCVIUpdater, pomdp::POMDPs.POMDP, num_prune_obs::Int64, rng::AbstractRNG)
     new_alpha_edges = deepcopy(actback.alpha_edges)
     append!(new_alpha_edges, edges)
     # Prune
-    new_alpha_edges = prune_alpha_edges(new_alpha_edges, actback, pomdp, num_prune_obs) # Slow?
+    new_alpha_edges = prune_alpha_edges(new_alpha_edges, actback, pomdp, num_prune_obs, rng) # Slow?
 
     # check
     l1 = length(actback.alpha_edges)
@@ -104,7 +104,7 @@ function backup{S,A}(actback::MCVIActionBackup{S,A}, policy::MCVIPolicy, sim::MC
     # Compute alpha edges
     new_alpha_edges = compute_alpha_edges(nodes, actback, policy, sim, pomdp)
     # Add alpha edges
-    n = add_alpha_edges!(actback, new_alpha_edges, policy.updater, pomdp, num_prune_obs)
+    n = add_alpha_edges!(actback, new_alpha_edges, policy.updater, pomdp, num_prune_obs, sim.rng)
     return n
 end
 
@@ -164,6 +164,6 @@ end
 function backup(belief::MCVIBelief, policy::MCVIPolicy, sim::MCVISimulator, pomdp::POMDPs.POMDP, num_state::Int64, num_prune_obs::Int64, num_eval_belief::Int64)
     # Belief backup struct
     bb = MCVIBeliefBackup(belief)
-    initialize_belief_backup!(bb, pomdp, num_state)
+    initialize_belief_backup!(bb, pomdp, num_state, sim.rng)
     return backup(bb, policy, sim, pomdp, num_prune_obs, num_eval_belief)
 end

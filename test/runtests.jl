@@ -5,19 +5,20 @@ import MCVI: lowerbound, upperbound, init_lower_action
 include("LightDark.jl")
 
 function test_LightDark1D()
+    rng = MersenneTwister(42)
     p = LightDark1D()
     @test discount(p) == 0.9
     s0 = LightDark1DState(0,0)
-    low0 = lowerbound(p, s0)
+    low0 = lowerbound(p, s0, rng)
     @test low0 == 9.0
-    s1, r = generate_sr(p, s0, +1, p.rng)
+    s1, r = generate_sr(p, s0, +1, rng)
     @test s1.y == 1.0
     @test r == 0.0
-    s2, r = generate_sr(p, s1, 0, p.rng)
+    s2, r = generate_sr(p, s1, 0, rng)
     @test s2.x != 0
     @test r == -10
     s3 = LightDark1DState(0, 5)
-    obs = generate_o(p, nothing, nothing, s3, p.rng)
+    obs = generate_o(p, nothing, nothing, s3, rng)
     @test abs(obs-5.0) <= 0.1
     return true
 end
@@ -39,3 +40,5 @@ include("test_belief.jl")
 
 include("test_solve.jl")
 @test test_solve()
+
+# @test test_dummy_heuristics()

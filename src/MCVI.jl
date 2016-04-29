@@ -8,11 +8,11 @@ import POMDPs: solve, action, create_policy, rand, simulate, updater
 
 typealias Reward Float64
 
-function lowerbound{S}(p::POMDPs.POMDP, s::S)
+function lowerbound{S}(p::POMDPs.POMDP, s::S, rng::AbstractRNG)
     error("`lowerbound` Not Implemented")
 end
 
-function upperbound{S}(p::POMDPs.POMDP, s::S)
+function upperbound{S}(p::POMDPs.POMDP, s::S, rng::AbstractRNG)
     error("`upperbound` Not Implemented")
 end
 

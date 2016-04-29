@@ -64,8 +64,8 @@ function compute{S,A,O}(sts::Vector{S}, policy::POMDPs.Policy, sim::POMDPs.Simul
 
     for i in 1:num_obs
         # sample observation from belief
-        s = rand(pomdp.rng, ba) # TODO: which rng?
-        obs[i] = generate_o(pomdp, nothing, nothing, s, pomdp.rng)
+        s = rand(sim.rng, ba)
+        obs[i] = generate_o(pomdp, nothing, nothing, s, sim.rng)
     end
 
     for i in 1:num_states

@@ -2,7 +2,7 @@ function test_backup()
     p = LightDark1D()
     policy = MCVIPolicy(p)
     MCVI.initialize_updater!(policy)
-    b0 = MCVI.initial_belief(p, 500)
+    b0 = MCVI.initial_belief(p, 500, MersenneTwister(42))
     # s0 = initial_state(p)
     # sim = MCVISimulator(MersenneTwister(420), s0, 1)
 

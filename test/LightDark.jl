@@ -23,12 +23,11 @@ copy(s::LightDark1DState) = LightDark1DState(s.x, s.y)
 type LightDark1D <: POMDPs.POMDP{LightDark1DState,Int64,Float64}
     discount_factor::Float64
     # lower_act::Int64
-    rng::AbstractRNG
-
     step::Float64
     movement_cost::Float64
 end
-LightDark1D() = LightDark1D(0.9, MersenneTwister(42), 1, 0)
+
+LightDark1D() = LightDark1D(0.9, 1, 0)
 
 create_state(p::LightDark1D) = LightDark1DState(0,0)
 
@@ -62,19 +61,19 @@ end
 
 sigma(x::Float64) = abs(x - 5)/sqrt(2) + 1e-2
 function generate_o(p::LightDark1D, s, a, sp::LightDark1DState, rng::AbstractRNG)
-    return sp.y + Base.randn(p.rng)*sigma(sp.y)
+    return sp.y + Base.randn(rng)*sigma(sp.y)
 end
 
 function init_lower_action(p::LightDark1D)
     return 0 # p.lower_act
 end
 
-function lowerbound(p::LightDark1D, s::LightDark1DState)
-    _, r = generate_sr(p, s, init_lower_action(p), p.rng)
+function lowerbound(p::LightDark1D, s::LightDark1DState, rng::AbstractRNG)
+    _, r = generate_sr(p, s, init_lower_action(p), rng)
     return r * discount(p)
 end
 
-function upperbound(p::LightDark1D, s::LightDark1DState)
+function upperbound(p::LightDark1D, s::LightDark1DState, rng::AbstractRNG)
     steps = abs(s.y)/p.step + 1
     return 10*(discount(p)^steps)
 end

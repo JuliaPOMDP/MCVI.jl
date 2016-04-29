@@ -27,6 +27,7 @@ function build_dummy_graph(pomdp)
 end
 
 function test_dummy_graph()
+    rng = MersenneTwister(42)
     p = LightDark1D()
     up = build_dummy_graph(p)
     # s0 = initial_state(p)
@@ -36,7 +37,7 @@ function test_dummy_graph()
 
     sumv = 0.0
     for i in 1:1000
-        ss = initial_state(p, p.rng)
+        ss = initial_state(p, rng)
         sim.init_state = ss
         sumv += MCVI.simulate(sim, p, policy, up, up.root)
     end
@@ -45,6 +46,7 @@ function test_dummy_graph()
 end
 
 function test_dummy_graph2()
+    rng = MersenneTwister(42)
     pomdp = LightDark1D()
     up = MCVIUpdater(pomdp)
     n0 = MCVI.init_node(up, pomdp)
@@ -75,7 +77,7 @@ function test_dummy_graph2()
     dump_json(policy, "/tmp/test_policy.json")
     sumv = 0.0
     for i in 1:1000
-        ss = initial_state(pomdp, pomdp.rng)
+        ss = initial_state(pomdp, rng)
         sim.init_state = ss
         sumv += MCVI.simulate(sim, pomdp, policy, up, up.root)
     end

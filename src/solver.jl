@@ -50,8 +50,8 @@ type MCVISolver <: POMDPs.Solver
 end
 
 function initialize_root!{S,A,O}(solver::MCVISolver, pomdp::POMDPs.POMDP{S,A,O})
-    b0 = initial_belief(pomdp, solver.num_particles)  # TODO: send num_particles
-    solver.root = BeliefNode(Nullable{O}(), b0, upperbound(b0, pomdp), lowerbound(b0, pomdp), Nullable{MCVINode}(), Vector{TreeNode}())
+    b0 = initial_belief(pomdp, solver.num_particles, solver.simulator.rng)  # TODO: send num_particles
+    solver.root = BeliefNode(Nullable{O}(), b0, upperbound(b0, pomdp, solver.simulator.rng), lowerbound(b0, pomdp, solver.simulator.rng), Nullable{MCVINode}(), Vector{TreeNode}())
 end
 
 create_policy(::MCVISolver, p::POMDPs.POMDP) = MCVIPolicy(p)
@@ -65,14 +65,14 @@ function expand!(bn::BeliefNode, solver::MCVISolver, pomdp::POMDPs.POMDP)
     end
 
     for a in iterator(actions(pomdp))
-        bel = next(bn.belief, a, pomdp) # Next belief by action
+        bel = next(bn.belief, a, pomdp, solver.simulator.rng) # Next belief by action
         imm_r = reward(bel, pomdp)
         local upper::Float64
         if isterminal(pomdp, a)
             upper = imm_r*discount(pomdp)
         else
             # Initialize using problem upper value
-            upper = upperbound(bel, pomdp)
+            upper = upperbound(bel, pomdp, solver.simulator.rng)
         end
         print_with_color(:yellow, "expand")
         println(" (belief) -> $(a) \t $(imm_r) \t $(upper)")
@@ -90,12 +90,12 @@ function expand!{A}(an::ActionNode{A}, solver::MCVISolver, pomdp::POMDPs.POMDP)
     end
     for i in 1:solver.obs_branch # branching factor
         # Sample observation
-        s = rand(pomdp.rng, an.belief)
-        obs = generate_o(pomdp, nothing, nothing, s, pomdp.rng) # TODO: rng?
+        s = rand(solver.simulator.rng, an.belief)
+        obs = generate_o(pomdp, nothing, nothing, s, solver.simulator.rng) # TODO: rng?
         bel = next(an.belief, obs, pomdp) # Next belief by observation
 
-        upper = upperbound(bel, pomdp)
-        lower = lowerbound(bel, pomdp)
+        upper = upperbound(bel, pomdp, solver.simulator.rng)
+        lower = lowerbound(bel, pomdp, solver.simulator.rng)
 
         belief_node = BeliefNode(Nullable(obs), bel, upper, lower, Nullable{MCVINode}(), Vector{ActionNode{A}}())
         push!(an.children, belief_node)
@@ -149,7 +149,7 @@ Search over belief
 """
 function search!{S,A,O}(bn::BeliefNode, solver::MCVISolver, policy::MCVIPolicy, pomdp::POMDPs.POMDP{S,A,O}, target_gap::Float64)
     try
-        println("belief -> $get(bn.obs) \t $(bn.upper) \t $(bn.lower)")
+        println("belief -> $(get(bn.obs)) \t $(bn.upper) \t $(bn.lower)")
     catch e
         if isa(e, NullException)
             println("belief -> nothing \t $(bn.upper) \t $(bn.lower)")
