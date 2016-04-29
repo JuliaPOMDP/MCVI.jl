@@ -47,7 +47,7 @@ type MCVISolver <: POMDPs.Solver
 end
 
 function initialize_root!{S,A,O}(solver::MCVISolver, pomdp::POMDPs.POMDP{S,A,O})
-    b0 = initial_belief(pomdp)
+    b0 = initial_belief(pomdp, solver.num_particles)  # TODO: send num_particles
     solver.root = BeliefNode(nothing, b0, upperbound(b0, pomdp), lowerbound(b0, pomdp), nothing, Vector{TreeNode}())
 end
 
@@ -112,7 +112,7 @@ function backup!(bn::BeliefNode, solver::MCVISolver, policy::MCVIPolicy, pomdp::
     end
 
     # Increase lower value
-    policy_node, node_val = backup(bn.belief, policy, solver.simulator, pomdp) # Backup belief
+    policy_node, node_val = backup(bn.belief, policy, solver.simulator, pomdp, solver.num_state) # Backup belief
     print_with_color(:magenta, "backup")
     println(" (belief) -> $(node_val) \t $(bn.lower)")
     if node_val > bn.lower

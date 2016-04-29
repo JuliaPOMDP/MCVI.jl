@@ -140,8 +140,8 @@ end
 """
 Backup belief
 """
-function backup(bb::BeliefBeliefBackup, policy::MCVIPolicy, sim::MCVISimulator, pomdp::POMDPs.POMDP)
-    # bb = BeliefBeliefBackup(belief, pomdp)
+function backup(bb::MCVIBeliefBackup, policy::MCVIPolicy, sim::MCVISimulator, pomdp::POMDPs.POMDP)
+    # bb = MCVIBeliefBackup(belief, pomdp)
     # Get newer nodes
     nodes = policy.updater.nodes_queue[bb.last_index:end]
     # Update best belief
@@ -163,8 +163,9 @@ function backup(bb::BeliefBeliefBackup, policy::MCVIPolicy, sim::MCVISimulator, 
     return (bb.max_node, bb.maxv)                     # TODO return bb ?
 end
 
-function backup(belief::MCVIBelief, policy::MCVIPolicy, sim::MCVISimulator, pomdp::POMDPs.POMDP)
+function backup(belief::MCVIBelief, policy::MCVIPolicy, sim::MCVISimulator, pomdp::POMDPs.POMDP, num_state::Int64)
     # Belief backup struct
     bb = MCVIBeliefBackup(belief)
+    initialize_belief_backup!(bb, pomdp, num_state)
     return backup(bb, policy, sim, pomdp)
 end
