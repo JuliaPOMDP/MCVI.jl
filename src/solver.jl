@@ -223,7 +223,7 @@ function solve(solver::MCVISolver, pomdp::POMDPs.POMDP, policy::MCVIPolicy=creat
     # Search
     for i in 1:solver.n_iter
         search!(get(solver.root), solver, policy, pomdp, target_gap) # Here solver.root is a BeliefNode
-        policy.root = get(get(solver.root).best_node)             # Here policy.root is a MCVINode
+        policy.updater.root = get(get(solver.root).best_node)             # Here policy.updater.root is a MCVINode
         dump_json(policy, "/tmp/policy.json")
         if (get(solver.root).upper - get(solver.root).lower) < 0.1
             break

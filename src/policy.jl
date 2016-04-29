@@ -49,11 +49,10 @@ end
 type MCVIPolicy <: POMDPs.Policy
     problem::POMDPs.POMDP
     updater::Union{Void, POMDPs.Updater}
-    root
     MCVIPolicy() = new()
-    MCVIPolicy(p) = new(p, nothing, nothing)
-    MCVIPolicy(p, up) = new(p, up, nothing)
-    MCVIPolicy(p, up, root) = new(p, up, root)
+    MCVIPolicy(p) = new(p, nothing)
+    MCVIPolicy(p, up) = new(p, up)
+    MCVIPolicy(p, up, root) = new(p, up)
 end
 
 
@@ -87,7 +86,6 @@ function initialize_updater!(policy::MCVIPolicy)
     ns = init_nodes(policy, ps)
     for n in ns
         addnode!(ps, n)
-        policy.root = n
         ps.root = n
     end
     policy.updater = ps

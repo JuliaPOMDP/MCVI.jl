@@ -32,7 +32,7 @@ function test_dummy_graph()
     # s0 = initial_state(p)
     # sim = MCVISimulator(MersenneTwister(420), 1)
     sim = MCVISimulator()
-    policy = MCVIPolicy(p, up, up.root)
+    policy = MCVIPolicy(p, up)
 
     sumv = 0.0
     for i in 1:1000
@@ -71,7 +71,7 @@ function test_dummy_graph2()
     # s0 = initial_state(pomdp)
     # sim = MCVISimulator(MersenneTwister(420), s0, up.root, 1)
     sim = MCVISimulator()
-    policy = MCVIPolicy(pomdp, up, up.root)
+    policy = MCVIPolicy(pomdp, up)
     dump_json(policy, "/tmp/test_policy.json")
     sumv = 0.0
     for i in 1:1000
