@@ -17,8 +17,8 @@ Is supposed to represent the initial state distribution.
 TODO: Should this be part of the problem definition?
       Not sure how to propagate num_particles without storing it in pomdp or calling it a different function?
 """
-function initial_belief{S,A}(pomdp::POMDPs.POMDP{S,A})
-    num_particles = 500         # TODO: not sure about this
+function initial_belief{S,A}(pomdp::POMDPs.POMDP{S,A}, num_particles::Int64)
+    # num_particles = 500         # TODO: not sure about this
     particles = Vector{S}(num_particles)
     wts = zeros(num_particles)
     for i in 1:num_particles
