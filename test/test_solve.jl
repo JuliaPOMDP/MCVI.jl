@@ -2,7 +2,7 @@ function test_solve()
     prob = LightDark1D()
     sim = MCVISimulator()
 
-    solver = MCVISolver(sim, nothing, MersenneTwister(42), 2, 100, 2, 500, 1000, 5000)
+    solver = MCVISolver(sim, nothing, MersenneTwister(42), 2, 100, 8, 500, 1000, 5000)
     println("Solving...")
     policy = solve(solver, prob)
     println("...Solved")
