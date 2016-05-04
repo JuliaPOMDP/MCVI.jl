@@ -147,7 +147,7 @@ function backup(bb::MCVIBeliefBackup, policy::MCVIPolicy, sim::MCVISimulator, po
     # Get new nodes from action backup
     new_nodes = Vector{MCVINode}(length(bb.act_backupers))
     for (i, actback) in enumerate(bb.act_backupers)
-        new_nodes[i] = backup(actback, policy, sim, pomdp, nodes, num_prune_obs) # Backup action, TODO Slowwww
+        new_nodes[i] = backup(actback, policy, sim, pomdp, nodes, num_prune_obs) # Backup action, FIXME Slowwww
     end
     print_with_color(:cyan, "backup action")
     println(" (nodes)")

@@ -7,18 +7,17 @@ type MCVIBelief{S,A}
     id::UInt64
 end
 
-MCVIBelief{S,A}(space::MCVISubspace{S,A}, weights::Vector{Float64}, id::UInt64) = MCVIBelief{S,A}(space, weights, id)
+MCVIBelief{S,A}(space::MCVISubspace{S,A}...) = MCVIBelief{S,A}(space...)
 
 Base.length(b::MCVIBelief) = length(b.weights)
 
 """
 Create initial belief particles
 Is supposed to represent the initial state distribution.
-TODO: Should this be part of the problem definition?
+TODO Should this be part of the problem definition?
       Not sure how to propagate num_particles without storing it in pomdp or calling it a different function?
 """
 function initial_belief{S,A,O}(pomdp::POMDPs.POMDP{S,A,O}, num_particles::Int64, rng::AbstractRNG)
-    # num_particles = 500         # TODO: not sure about this
     particles = Vector{S}(num_particles)
     wts = zeros(num_particles)
     for i in 1:num_particles

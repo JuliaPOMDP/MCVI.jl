@@ -50,7 +50,7 @@ type MCVISolver <: POMDPs.Solver
 end
 
 function initialize_root!{S,A,O}(solver::MCVISolver, pomdp::POMDPs.POMDP{S,A,O})
-    b0 = initial_belief(pomdp, solver.num_particles, solver.simulator.rng)  # TODO: send num_particles
+    b0 = initial_belief(pomdp, solver.num_particles, solver.simulator.rng)
     solver.root = BeliefNode(Nullable{O}(), b0, upperbound(b0, pomdp, solver.simulator.rng), lowerbound(b0, pomdp, solver.simulator.rng), Nullable{MCVINode}(), Vector{TreeNode}())
 end
 
@@ -68,7 +68,7 @@ function expand!(bn::BeliefNode, solver::MCVISolver, pomdp::POMDPs.POMDP)
         bel = next(bn.belief, a, pomdp, solver.simulator.rng) # Next belief by action
         imm_r = reward(bel, pomdp)
         local upper::Float64
-        if isterminal(pomdp, a)
+        if isterminal(pomdp, a) # FIXME
             upper = imm_r*discount(pomdp)
         else
             # Initialize using problem upper value
@@ -91,7 +91,7 @@ function expand!{A}(an::ActionNode{A}, solver::MCVISolver, pomdp::POMDPs.POMDP)
     for i in 1:solver.obs_branch # branching factor
         # Sample observation
         s = rand(solver.simulator.rng, an.belief)
-        obs = generate_o(pomdp, nothing, nothing, s, solver.simulator.rng) # TODO: rng?
+        obs = generate_o(pomdp, nothing, nothing, s, solver.simulator.rng)
         bel = next(an.belief, obs, pomdp) # Next belief by observation
 
         upper = upperbound(bel, pomdp, solver.simulator.rng)
@@ -183,7 +183,7 @@ Search over action
 """
 function search!(an::ActionNode, solver::MCVISolver, policy::MCVIPolicy, pomdp::POMDPs.POMDP, target_gap::Float64)
     println("act -> $(an.act) \t $(an.upper)")
-    if isterminal(pomdp, an.act)
+    if isterminal(pomdp, an.act) # FIXME
         return nothing
     end
     # Expand action
@@ -224,7 +224,7 @@ function solve(solver::MCVISolver, pomdp::POMDPs.POMDP, policy::MCVIPolicy=creat
     for i in 1:solver.n_iter
         search!(get(solver.root), solver, policy, pomdp, target_gap) # Here solver.root is a BeliefNode
         policy.updater.root = get(get(solver.root).best_node)             # Here policy.updater.root is a MCVINode
-        dump_json(policy, "/tmp/policy.json")
+        dump_json(policy, "/tmp/policy.json")                             # TODO: remove this
         if (get(solver.root).upper - get(solver.root).lower) < 0.1
             break
         end

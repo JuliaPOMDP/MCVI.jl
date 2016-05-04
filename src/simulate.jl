@@ -37,7 +37,6 @@ function simulate(sim::MCVISimulator, pomdp::POMDPs.POMDP, policy::MCVIPolicy, u
     return sum_reward
 end
 
-#TODO: Merge both simulate using isa ?
 function simulate(sim::MCVISimulator, pomdp::POMDPs.POMDP, policy::POMDPs.Policy, updater::POMDPs.Updater, initial_belief::MCVIBelief)
     sum_reward::Reward = 0
     if sim.init_state != nothing

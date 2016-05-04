@@ -19,14 +19,13 @@ copy(n::MCVINode) = MCVINode(n.id, n.act, n.states, n.alpha_edges)
 """
 Returns the next node in the policygraph
 """
-type MCVIUpdater{S,A} <: POMDPs.Updater{MCVINode}
+type MCVIUpdater <: POMDPs.Updater{MCVINode}
     root
     nodes::Dict{UInt64, MCVINode}
     nodes_queue::Vector{MCVINode}
 end
 
-MCVIUpdater{S,A}(pomdp::POMDPs.POMDP{S,A}) = MCVIUpdater{S,A}(nothing, Dict{UInt64, MCVINode}(), Vector{MCVINode}())
-
+MCVIUpdater() = MCVIUpdater(nothing, Dict{UInt64, MCVINode}(), Vector{MCVINode}())
 
 Base.length(ps::MCVIUpdater) = length(ps.nodes)
 
@@ -34,7 +33,7 @@ hasroot(ps::MCVIUpdater) = ps.root != nothing
 
 hasnode(ps::MCVIUpdater, n::MCVINode) = haskey(ps.nodes, n.id)
 
-function create_node{S,A}(ps::MCVIUpdater{S,A}, a::A, states, alpha_edges::Vector{AlphaEdge})
+function create_node{S,A}(ps::MCVIUpdater, a::A, states::Union{Void,S}, alpha_edges::Vector{AlphaEdge})
     if states == nothing
         st_hash = Base.hash(states)
     else
@@ -56,21 +55,21 @@ type MCVIPolicy <: POMDPs.Policy
 end
 
 
-function init_node{S,A}(ps::MCVIUpdater{S,A}, problem::POMDPs.POMDP)
+function init_node(ps::MCVIUpdater, problem::POMDPs.POMDP)
     return create_node(ps, init_lower_action(problem), nothing, Vector{AlphaEdge}())
 end
 
-function init_nodes{S,A}(policy::MCVIPolicy, ps::MCVIUpdater{S,A})
+function init_nodes(policy::MCVIPolicy, ps::MCVIUpdater)
     ns = Vector{MCVINode}()
     for a in iterator(actions(policy.problem))
-        if isterminal(policy.problem, a)
+        if isterminal(policy.problem, a) # FIXME
             push!(ns, create_node(ps, a, nothing, Vector{AlphaEdge}()))
         end
     end
     return ns
 end
 
-function addnode!{S,A}(ps::MCVIUpdater{S,A}, n::MCVINode)
+function addnode!(ps::MCVIUpdater, n::MCVINode)
     ps.nodes[n.id] = n
     push!(ps.nodes_queue, n)
 end
@@ -82,7 +81,7 @@ updater(policy::MCVIPolicy) = policy.updater
 Initialize and return the MCVIUpdater
 """
 function initialize_updater!(policy::MCVIPolicy)
-    ps = MCVIUpdater(policy.problem)
+    ps = MCVIUpdater()
     ns = init_nodes(policy, ps)
     for n in ns
         addnode!(ps, n)
