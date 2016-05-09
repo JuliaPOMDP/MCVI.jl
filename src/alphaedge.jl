@@ -6,7 +6,6 @@ function evaluate(policy::POMDPs.Policy, sim::POMDPs.Simulator, pomdp::POMDPs.PO
     n = policy.updater.root
     v = 0.0
     v = @parallel (+) for i in 1:N
-        # @assert sim.init_state == nothing
         simulate(sim, pomdp, policy, policy.updater, n)
     end
     v /= N
@@ -17,11 +16,7 @@ end
 Evaluate a batch of states
 """
 function evaluate{S}(sts::Vector{S}, policy::POMDPs.Policy, sim::POMDPs.Simulator, pomdp::POMDPs.POMDP, n::MCVINode)
-    vs = zeros(length(sts))
-    for (i, s) in enumerate(sts)
-        sim.init_state = s
-        vs[i] += simulate(sim, pomdp, policy, policy.updater, n)
-    end
+    vs = pmap((s)->simulate(sim, pomdp, policy, policy.updater, n, s), sts)
     return vs
 end
 
@@ -30,12 +25,12 @@ Evaluate belief
 """
 function evaluate(b::MCVIBelief, policy::POMDPs.Policy, sim::MCVISimulator, pomdp::POMDPs.POMDP, n::MCVINode, num_eval_belief::Int64)
     val::Float64 = 0.0
-    for i in 1:num_eval_belief
+    val = @parallel (+) for i in 1:num_eval_belief
         s = rand(sim.rng, b)    # This is the initial state stuff :/
-        sim.init_state = s      # TODO maybe roll this into simulate as well?
-        val += simulate(sim, pomdp, policy, policy.updater, n)
+        # sim.init_state = s      # TODO maybe roll this into simulate as well?
+        simulate(sim, pomdp, policy, policy.updater, n, s)
     end
-    sim.init_state = nothing    # Back to being nothing
+    # sim.init_state = nothing    # Back to being nothing
     return val/num_eval_belief
 end
 
@@ -59,14 +54,13 @@ end
 function _fill_ov!{O}(ov::Vector{Float64}, osum::Vector{Float64}, obs::Vector{O},
                       policy::POMDPs.Policy, sim::POMDPs.Simulator, pomdp::POMDPs.POMDP,
                       n::MCVINode, ba::MCVIBelief, num_states::Int64)
+    sts = [rand(sim.rng, ba) for _ in 1:num_states]
+    v = evaluate(sts, policy, sim, pomdp, n)
     for i in 1:num_states
-        s = rand(sim.rng, ba)
-        sim.init_state = s
-        v = simulate(sim, pomdp, policy, policy.updater, n)
         for (j,o) in enumerate(obs)
-            wt = pdf(s, o)
+            wt = pdf(sts[i], o)
             osum[j] += wt
-            ov[j] += v*wt
+            ov[j] += v[i]*wt
         end
     end
     # normalize
@@ -76,33 +70,29 @@ function _fill_ov!{O}(ov::Vector{Float64}, osum::Vector{Float64}, obs::Vector{O}
 end
 
 function _fill_X!{O,S}(X::Array{Float64,2}, obs::Vector{O}, sts::Vector{S})
-    for (i,o) in enumerate(obs)
-        for (j,s) in enumerate(sts)
+    for (j,s) in enumerate(sts)
+        for (i,o) in enumerate(obs)
             X[i,j] = pdf(s, o)
         end
     end
 end
 
+type Scratch{O}
+    obs::Vector{O}
+    ov::Vector{Float64}
+    osum::Vector{Float64}
+    X::Array{Float64,2}
+end
+
 """
 Least square computation
 """
-function compute{S,A,O}(sts::Vector{S}, policy::POMDPs.Policy, sim::POMDPs.Simulator, pomdp::POMDPs.POMDP{S,A,O}, n::MCVINode, ba::MCVIBelief)
-    # XXX possibly pomdp/solver config
-    num_states = 1000
-    num_obs = 50
+function compute{S,A,O}(sts::Vector{S}, policy::POMDPs.Policy, sim::POMDPs.Simulator, pomdp::POMDPs.POMDP{S,A,O}, n::MCVINode, ba::MCVIBelief, scratch::Scratch)
+    _fill_obs!(scratch.obs, sim, pomdp, ba)
+    _fill_ov!(scratch.ov, scratch.osum, scratch.obs, policy, sim, pomdp, n, ba, size(scratch.X,2))
+    _fill_X!(scratch.X, scratch.obs, sts)
 
-    obs = Vector{O}(num_obs)
-    ov = zeros(num_obs)
-    osum = zeros(num_obs)
-    X = zeros(num_obs, length(sts))
-
-    _fill_obs!(obs, sim, pomdp, ba)
-
-    _fill_ov!(ov, osum, obs, policy, sim, pomdp, n, ba, num_states)
-
-    _fill_X!(X, obs, sts)
-
-    b = X \ ov                  # Least squares
+    b = scratch.X \ scratch.ov                  # Least squares
 
     @assert length(b) == length(sts)
     @assert !isnan(b[1])

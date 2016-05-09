@@ -1,14 +1,14 @@
 type MCVISimulator <: POMDPs.Simulator
     rng::AbstractRNG
-    init_state                  # In case we want to fix starting state
+    # init_state                  # In case we want to fix starting state
     times
 end
-MCVISimulator() = MCVISimulator(MersenneTwister(420), nothing, 1)
+MCVISimulator() = MCVISimulator(MersenneTwister(420), 1)
 
-function simulate(sim::MCVISimulator, pomdp::POMDPs.POMDP, policy::MCVIPolicy, updater::MCVIUpdater, initial_node::MCVINode)
+function simulate(sim::MCVISimulator, pomdp::POMDPs.POMDP, policy::MCVIPolicy, updater::MCVIUpdater, initial_node::MCVINode, init_state=nothing)
     sum_reward::Reward = 0
-    if sim.init_state != nothing
-        s = sim.init_state
+    if init_state != nothing
+        s = init_state
     else
         s = initial_state(pomdp, sim.rng)
     end

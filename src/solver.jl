@@ -45,13 +45,19 @@ type MCVISolver <: POMDPs.Solver
     num_state::Int64
     num_prune_obs::Int64
     num_eval_belief::Int64
+
+    num_obs::Int64
+    scratch::Nullable{Scratch}
     MCVISolver() = new()
-    MCVISolver(sim, root, rng, n_iter, nbp, ob, ns, npo, neb) = new(sim, root, rng, n_iter, nbp, ob, ns, npo, neb)
+    function MCVISolver(sim, root, rng, n_iter, nbp, ob, ns, npo, neb, num_obs)
+        new(sim, root, rng, n_iter, nbp, ob, ns, npo, neb, num_obs, Nullable{Scratch}())
+    end
 end
 
 function initialize_root!{S,A,O}(solver::MCVISolver, pomdp::POMDPs.POMDP{S,A,O})
     b0 = initial_belief(pomdp, solver.num_particles, solver.simulator.rng)
     solver.root = BeliefNode(Nullable{O}(), b0, upperbound(b0, pomdp, solver.simulator.rng), lowerbound(b0, pomdp, solver.simulator.rng), Nullable{MCVINode}(), Vector{TreeNode}())
+    solver.scratch = Scratch(Vector{O}(solver.num_obs), zeros(solver.num_obs), zeros(solver.num_obs), zeros(solver.num_obs, 2))
 end
 
 create_policy(::MCVISolver, p::POMDPs.POMDP) = MCVIPolicy(p)
@@ -119,7 +125,7 @@ function backup!(bn::BeliefNode, solver::MCVISolver, policy::MCVIPolicy, pomdp::
 
     # Increase lower value
     policy_node, node_val = backup(bn.belief, policy, solver.simulator, pomdp, solver.num_state,
-                                   solver.num_prune_obs, solver.num_eval_belief) # Backup belief
+                                   solver.num_prune_obs, solver.num_eval_belief, get(solver.scratch)) # Backup belief
     print_with_color(:magenta, "backup")
     println(" (belief) -> $(node_val) \t $(bn.lower)")
     if node_val > bn.lower
