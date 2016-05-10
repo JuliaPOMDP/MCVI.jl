@@ -9,12 +9,13 @@ type MCVINode
     act::Any
     states::Any
     alpha_edges::Vector{AlphaEdge}
+    MCVINode() = new()
+    MCVINode(id, act, states, aes) = new(id, act, states, aes)
 end
 
 hasnext(n::MCVINode) = !isempty(n.alpha_edges)
 
 copy(n::MCVINode) = MCVINode(n.id, n.act, n.states, n.alpha_edges)
-
 
 """
 Returns the next node in the policygraph
