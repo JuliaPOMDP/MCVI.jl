@@ -34,6 +34,8 @@ hasroot(ps::MCVIUpdater) = ps.root != nothing
 
 hasnode(ps::MCVIUpdater, n::MCVINode) = haskey(ps.nodes, n.id)
 
+create_belief(ps::MCVIUpdater) = MCVINode()
+
 function create_node{S,A}(ps::MCVIUpdater, a::A, states::Union{Void,S}, alpha_edges::Vector{AlphaEdge})
     if states == nothing
         st_hash = Base.hash(states)
@@ -94,7 +96,7 @@ end
 """
 Move to the next policy state given observation
 """
-function update{A,O}(ps::MCVIUpdater, n::MCVINode, act::A, obs::O)
+function update{A,O}(ps::MCVIUpdater, n::MCVINode, act::A, obs::O, np::MCVINode=create_belief(ps))
     @assert hasnext(n) "No next policy state exists"
 
     local nid::UInt64
