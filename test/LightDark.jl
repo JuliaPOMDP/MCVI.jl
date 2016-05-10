@@ -3,31 +3,44 @@ import Base: ==, +, *, -
 using POMDPs
 import POMDPs: create_state, discount, isterminal, pdf, actions, iterator, n_actions
 using GenerativeModels
-import GenerativeModels: generate_sr, generate_o, initial_state
+import GenerativeModels: generate_sor, generate_o, initial_state
+
+# Model
+# -----
+#
+#    -3-2-1 0 1 2 3
+# ...| | | | | | | | ...
+#           G   S
+#
+# Here R is the goal. S is the starting location
 
 type LightDark1DState
-    x::Float64
+    status::Int64
     y::Float64
     LightDark1DState() = new()
     LightDark1DState(x, y) = new(x, y)
 end
-==(s1::LightDark1DState, s2::LightDark1DState) = (s1.x == s2.x) && (s1.y == s2.y)
-+(s1::LightDark1DState, s2::LightDark1DState) = LightDark1DState(s1.x+s2.x, s1.y+s2.y)
--(s1::LightDark1DState, s2::LightDark1DState) = LightDark1DState(s1.x-s2.x, s1.y-s2.y)
-*(n::Number, s::LightDark1DState) = LightDark1DState(n*s.x, n*s.y)
-*(s1::LightDark1DState, s2::LightDark1DState) = LightDark1DState(s1.x*s2.x, s1.y*s2.y)
 
-Base.hash(s::LightDark1DState, h::UInt64=zero(UInt64)) = hash(s.x, hash(s.y, h))
-copy(s::LightDark1DState) = LightDark1DState(s.x, s.y)
+# FIXME Status arithmetic
+==(s1::LightDark1DState, s2::LightDark1DState) = (s1.status == s2.status) && (s1.y == s2.y)
++(s1::LightDark1DState, s2::LightDark1DState) = LightDark1DState(s1.status+s2.status, s1.y+s2.y)
+-(s1::LightDark1DState, s2::LightDark1DState) = LightDark1DState(s1.status-s2.status, s1.y-s2.y)
+*(n::Number, s::LightDark1DState) = LightDark1DState(s.status, n*s.y)
+*(s1::LightDark1DState, s2::LightDark1DState) = LightDark1DState(s1.status*s2.status, s1.y*s2.y)
+
+Base.hash(s::LightDark1DState, h::UInt64=zero(UInt64)) = hash(s.status, hash(s.y, h))
+copy(s::LightDark1DState) = LightDark1DState(s.status, s.y)
 
 type LightDark1D <: POMDPs.POMDP{LightDark1DState,Int64,Float64}
     discount_factor::Float64
     # lower_act::Int64
-    step::Float64
+    correct_r::Float64
+    incorrect_r::Float64
+    step_size::Float64
     movement_cost::Float64
 end
 
-LightDark1D() = LightDark1D(0.9, 1, 0)
+LightDark1D() = LightDark1D(0.9, 10, -10, 1, 0)
 
 create_state(p::LightDark1D) = LightDark1DState(0,0)
 
@@ -35,59 +48,13 @@ discount(p::LightDark1D) = p.discount_factor
 
 isterminal(::LightDark1D, act::Int64) = act == 0
 
-function initial_state(p::LightDark1D, rng::AbstractRNG)
-    return LightDark1DState(0, 2+Base.randn(rng)*3)
-end
+isterminal(::LightDark1D, s::LightDark1DState) = s.status < 0
 
-function generate_sr{LightDark1DState}(p::LightDark1D, s::LightDark1DState, a::Int64, rng::AbstractRNG)
-    sprime = copy(s)
-    if sprime.x > 0
-        r = 0
-        return (sprime, r)
-    end
-    if a == 0
-        sprime.x = 1.0
-        if abs(sprime.y) < 1
-            r = 10
-        else
-            r = -10
-        end
-    else
-        sprime.y += a
-        r = 0
-    end
-    return (sprime, r)
-end
-
-sigma(x::Float64) = abs(x - 5)/sqrt(2) + 1e-2
-function generate_o(p::LightDark1D, s, a, sp::LightDark1DState, rng::AbstractRNG)
-    return sp.y + Base.randn(rng)*sigma(sp.y)
-end
-
-function init_lower_action(p::LightDark1D)
-    return 0 # p.lower_act
-end
-
-function lowerbound(p::LightDark1D, s::LightDark1DState, rng::AbstractRNG)
-    _, r = generate_sr(p, s, init_lower_action(p), rng)
-    return r * discount(p)
-end
-
-function upperbound(p::LightDark1D, s::LightDark1DState, rng::AbstractRNG)
-    steps = abs(s.y)/p.step + 1
-    return 10*(discount(p)^steps)
-end
-
-gauss(s::Float64, x::Float64) = 1 / sqrt(2*pi) / s * exp(-1*x^2/(2*s^2))
-function pdf(s::LightDark1DState, obs::Float64)
-    return gauss(sigma(s.y), s.y-obs)
-end
-
-type LightDark1DActionSpace <: POMDPs.AbstractSpace
+type LightDark1DActionSpace <: POMDPs.AbstractSpace{Int64}
     actions::Vector{Int64}
 end
 Base.length(asp::LightDark1DActionSpace) = length(asp.actions)
-actions(::LightDark1D) = LightDark1DActionSpace([-1, 0, 1]) # TODO
+actions(::LightDark1D) = LightDark1DActionSpace([-1, 0, 1]) # Left Stop Right
 actions(pomdp::LightDark1D, s::LightDark1DState, acts::LightDark1DActionSpace=actions(pomdp)) = acts
 iterator(space::LightDark1DActionSpace) = space.actions
 dimensions(::LightDark1DActionSpace) = 1
@@ -97,6 +64,77 @@ function rand(rng::AbstractRNG, asp::LightDark1DActionSpace, a::Int64)
     a = rand(rng, iterator(asp))
     return a
 end
+
+function initial_state(p::LightDark1D, rng::AbstractRNG)
+    return LightDark1DState(0, 2+Base.randn(rng)*3)
+end
+
+# function generate_sr{LightDark1DState}(p::LightDark1D, s::LightDark1DState, a::Int64, rng::AbstractRNG)
+#     sprime = copy(s)
+#     if sprime.x > 0
+#         r = 0
+#         return (sprime, r)
+#     end
+#     if a == 0
+#         sprime.x = 1.0
+#         if abs(sprime.y) < 1
+#             r = 10
+#         else
+#             r = -10
+#         end
+#     else
+#         sprime.y += a
+#         r = 0
+#     end
+#     return (sprime, r)
+# end
+
+sigma(x::Float64) = abs(x - 5)/sqrt(2) + 1e-2
+function generate_o(p::LightDark1D, s, a, sp::LightDark1DState, rng::AbstractRNG)
+    return sp.y + Base.randn(rng)*sigma(sp.y)
+end
+
+function generate_sor(p::LightDark1D, s::LightDark1DState, a::Int64, rng::AbstractRNG)
+    if s.status < 0                  # Terminal state
+        sprime = copy(s)
+        o = generate_o(p, nothing, nothing, sprime, rng)
+        r = 0                   # Penalty?
+        return (sprime, o, r)
+    end
+    if a == 0                   # Enter
+        sprime = LightDark1DState(-1, s.y)
+        if abs(s.y) < 1         # Correct loc is near 0
+            r = p.correct_r     # Correct
+        else
+            r = p.incorrect_r   # Incorrect
+        end
+    else
+        sprime = LightDark1DState(s.status, s.y+a)
+        r = 0
+    end
+    o = generate_o(p, nothing, nothing, sprime, rng)
+    return (sprime, o, r)
+end
+
+function init_lower_action(p::LightDark1D)
+    return 0 # Worst? This depends on the initial state? TODO
+end
+
+function lowerbound(p::LightDark1D, s::LightDark1DState, rng::AbstractRNG)
+    _, _, r = generate_sor(p, s, init_lower_action(p), rng)
+    return r * discount(p)
+end
+
+function upperbound(p::LightDark1D, s::LightDark1DState, rng::AbstractRNG)
+    steps = abs(s.y)/p.step_size + 1
+    return p.correct_r*(discount(p)^steps)
+end
+
+gauss(s::Float64, x::Float64) = 1 / sqrt(2*pi) / s * exp(-1*x^2/(2*s^2))
+function pdf(s::LightDark1DState, obs::Float64)
+    return gauss(sigma(s.y), s.y-obs)
+end
+
 
 # Define some simple policies based on particle belief
 
