@@ -2,7 +2,7 @@ module MCVI
 
 using JSON
 using POMDPs
-import GenerativeModels: generate_sr, generate_o, initial_state
+import GenerativeModels: generate_sor, generate_o, initial_state
 
 import POMDPs: solve, action, create_policy, rand, simulate, updater
 
@@ -29,6 +29,6 @@ include("updater.jl")
 include("solver.jl")
 
 
-export MCVISolver, MCVIPolicy, solve, action, create_policy, MCVIUpdater, MCVISimulator, simulate, updater, dump_json
+export MCVISolver, MCVIPolicy, solve, action, create_policy, MCVIUpdater, MCVISimulator, updater, dump_json
 
 end # module
