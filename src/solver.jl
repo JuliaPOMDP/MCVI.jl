@@ -74,10 +74,10 @@ function expand!(bn::BeliefNode, solver::MCVISolver, pomdp::POMDPs.POMDP)
         bel = next(bn.belief, a, pomdp, solver.simulator.rng) # Next belief by action
         imm_r = reward(bel, pomdp)
         local upper::Float64
-        if isterminal(pomdp, a) # FIXME
+        if isterminal(pomdp, a) # FIXME This is  necessary?
             upper = imm_r*discount(pomdp)
         else
-            # Initialize using problem upper value
+        # Initialize using problem upper value
             upper = upperbound(bel, pomdp, solver.simulator.rng)
         end
         print_with_color(:yellow, "expand")
@@ -149,7 +149,7 @@ function backup!(an::ActionNode, solver::MCVISolver, pomdp::POMDPs.POMDP)
         an.upper = u
     end
 end
-
+stack_size = 0
 """
 Search over belief
 """
@@ -177,6 +177,9 @@ function search!{S,A,O}(bn::BeliefNode, solver::MCVISolver, policy::MCVIPolicy, 
                 choice = Nullable(ac)
             end
         end
+        global stack_size
+        stack_size += 1
+        println("=============== $stack_size ===============")
         # Seach over action
         search!(get(choice), solver, policy, pomdp, target_gap)
     end
@@ -189,7 +192,7 @@ Search over action
 """
 function search!(an::ActionNode, solver::MCVISolver, policy::MCVIPolicy, pomdp::POMDPs.POMDP, target_gap::Float64)
     println("act -> $(an.act) \t $(an.upper)")
-    if isterminal(pomdp, an.act) # FIXME
+    if isterminal(pomdp, an.act) # FIXME Original MCVI searches until maxtime :( I could do that.
         return nothing
     end
     # Expand action
@@ -226,16 +229,21 @@ function solve(solver::MCVISolver, pomdp::POMDPs.POMDP, policy::MCVIPolicy=creat
     if policy.updater == nothing
         initialize_updater!(policy)
     end
+
     # Search
     for i in 1:solver.n_iter
+        global stack_size
+        stack_size = 0
+        tic()
         search!(get(solver.root), solver, policy, pomdp, target_gap) # Here solver.root is a BeliefNode
         policy.updater.root = get(get(solver.root).best_node)             # Here policy.updater.root is a MCVINode
-        dump_json(policy, "/tmp/policy.json")                             # TODO: remove this
+
         if (get(solver.root).upper - get(solver.root).lower) < 0.1
             break
         end
         print_with_color(:green, "iter $(i) \t")
-        println("upper: $(get(solver.root).upper) \t lower: $(get(solver.root).lower)")
+        println("upper: $(get(solver.root).upper) \t lower: $(get(solver.root).lower) \t time: $(toq())")
+
     end
     return policy
 end

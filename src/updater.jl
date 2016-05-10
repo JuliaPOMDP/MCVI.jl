@@ -71,10 +71,19 @@ function compute_alpha_edges{S,A}(nodes::Vector{MCVINode}, actback::MCVIActionBa
     sa = actback.sa
     scratch.X = zeros(size(scratch.X,1), length(sa))
     alpha_edges = Vector{AlphaEdge}(length(nodes))
-    for i in 1:length(nodes)
-        n = nodes[i]
-        alpha_edges[i] = compute(sa, policy, sim, pomdp, n, ba, scratch) # FIXME Slowwww
+    println("len_nodes: $(length(nodes))")
+    tic()
+    # alpha_edges = pmap((n)->compute(sa, policy, sim, pomdp, n), nodes) # FIXME simple
+    for (i,n) in enumerate(nodes)
+        alpha_edges[i] = compute(sa, policy, sim, pomdp, n)
     end
+
+    # alpha_edges = pmap((n)->compute(sa, policy, sim, pomdp, n, ba, scratch), nodes)
+    # for i in 1:length(nodes)
+    #     n = nodes[i]
+    #     alpha_edges[i] = compute(sa, policy, sim, pomdp, n, ba, scratch) # FIXME Slowwww
+    # end
+    toc()
     return alpha_edges
 end
 
@@ -116,7 +125,7 @@ function find_best_node(nodes::Vector{MCVINode}, policy::MCVIPolicy, sim::MCVISi
     vs = pmap((n)->evaluate(belief, policy, sim, pomdp, n, num_eval_belief), nodes)
     # for i in 1:length(nodes)
     #     n = nodes[i]
-    #     vs[i] = evaluate(belief, policy, sim, pomdp, n)
+    #     vs[i] = evaluate(belief, policy, sim, pomdp, n, num_eval_belief)
     # end
     (maxv, maxi) = findmax(vs)
     max_node = nodes[maxi]
@@ -141,17 +150,19 @@ function backup(bb::MCVIBeliefBackup, policy::MCVIPolicy, sim::MCVISimulator, po
     # Get newer nodes
     nodes = policy.updater.nodes_queue[bb.last_index:end]
     # Update best belief
+    tic()
     update!(bb, nodes, pomdp, policy, sim, -0.1, num_eval_belief) # Try ϵ less
     print_with_color(:cyan, "update")
-    println(" (nodes)")
+    println(" (nodes): $(toq())s")
 
     # Get new nodes from action backup
+    tic()
     new_nodes = Vector{MCVINode}(length(bb.act_backupers))
     for (i, actback) in enumerate(bb.act_backupers)
         new_nodes[i] = backup(actback, policy, sim, pomdp, nodes, num_prune_obs, scratch) # Backup action, FIXME Slowwww
     end
     print_with_color(:cyan, "backup action")
-    println(" (nodes)")
+    println(" (nodes): $(toq())s")
 
     bb.last_index += length(nodes)
     update!(bb, new_nodes, pomdp, policy, sim, +0.1, num_eval_belief) # Try ϵ more

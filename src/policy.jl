@@ -65,7 +65,7 @@ end
 function init_nodes(policy::MCVIPolicy, ps::MCVIUpdater)
     ns = Vector{MCVINode}()
     for a in iterator(actions(policy.problem))
-        if isterminal(policy.problem, a) # FIXME
+        if isterminal(policy.problem, a) # FIXME: Can use init_lower_action instead?
             push!(ns, create_node(ps, a, nothing, Vector{AlphaEdge}()))
         end
     end
@@ -118,7 +118,8 @@ function update{A,O}(ps::MCVIUpdater, n::MCVINode, act::A, obs::O, np::MCVINode=
         end
     end
     @assert ps.nodes[nid] != nothing
-    return ps.nodes[nid]
+    np = ps.nodes[nid]
+    return np
 end
 
 """
