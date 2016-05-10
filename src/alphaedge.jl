@@ -16,7 +16,11 @@ end
 Evaluate a batch of states
 """
 function evaluate{S}(sts::Vector{S}, policy::POMDPs.Policy, sim::POMDPs.Simulator, pomdp::POMDPs.POMDP, n::MCVINode)
-    vs = pmap((s)->simulate(sim, pomdp, policy, policy.updater, n, s), sts)
+    # vs = pmap((s)->simulate(sim, pomdp, policy, policy.updater, n, s), sts)
+    vs = zeros(Float64, length(sts))
+    for (i,s) in enumerate(sts)
+        vs[i] = simulate(sim, pomdp, policy, policy.updater, n, s)
+    end
     return vs
 end
 
