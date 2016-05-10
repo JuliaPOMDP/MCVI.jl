@@ -37,8 +37,8 @@ end
 """
 Alpha vectors
 """
-function compute{S}(sts::Vector{S}, policy::POMDPs.Policy, sim::POMDPs.Simulator, pomdp::POMDPs.POMDP, n::MCVINode)
-    a = evaluate(sts, updater, sim, pomdp, n)
+function compute{S,A,O}(sts::Vector{S}, policy::POMDPs.Policy, sim::POMDPs.Simulator, pomdp::POMDPs.POMDP{S,A,O}, n::MCVINode)
+    a = evaluate(sts, policy, sim, pomdp, n)
     edge = AlphaEdge(a, n.id)
     return edge
 end
