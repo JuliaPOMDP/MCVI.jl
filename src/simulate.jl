@@ -17,14 +17,13 @@ function simulate(sim::MCVISimulator, pomdp::POMDPs.POMDP, policy::MCVIPolicy, u
         disc::Float64 = 1
         sumr::Reward = 0
         while true
-            sprime, r = generate_sr(pomdp, s, n.act, sim.rng)
+            sprime, obs, r = generate_sor(pomdp, s, n.act, sim.rng)
             disc *= discount(pomdp)
             sumr += r*disc
             s = sprime
             if !hasnext(n)
                 break
             end
-            obs = generate_o(pomdp, nothing, nothing, s, sim.rng)
             n = update(updater, n, n.act, obs)
         end
         sum_reward += sumr

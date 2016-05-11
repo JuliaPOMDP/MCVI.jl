@@ -73,10 +73,10 @@ function compute_alpha_edges{S,A}(nodes::Vector{MCVINode}, actback::MCVIActionBa
     alpha_edges = Vector{AlphaEdge}(length(nodes))
     println("len_nodes: $(length(nodes))")
     tic()
-    # alpha_edges = pmap((n)->compute(sa, policy, sim, pomdp, n), nodes) # FIXME simple
-    for (i,n) in enumerate(nodes)
-        alpha_edges[i] = compute(sa, policy, sim, pomdp, n)
-    end
+    alpha_edges = pmap((n)->compute(sa, policy, sim, pomdp, n), nodes) # FIXME simple
+    # for (i,n) in enumerate(nodes)
+    #     alpha_edges[i] = compute(sa, policy, sim, pomdp, n)
+    # end
 
     # alpha_edges = pmap((n)->compute(sa, policy, sim, pomdp, n, ba, scratch), nodes)
     # for i in 1:length(nodes)
@@ -121,8 +121,8 @@ Returns the best node and its value
 """
 function find_best_node(nodes::Vector{MCVINode}, policy::MCVIPolicy, sim::MCVISimulator, pomdp::POMDPs.POMDP, belief::MCVIBelief, num_eval_belief::Int64)
     @assert length(nodes) > 0
-    vs = zeros(length(nodes))
     vs = pmap((n)->evaluate(belief, policy, sim, pomdp, n, num_eval_belief), nodes)
+    # vs = zeros(length(nodes))
     # for i in 1:length(nodes)
     #     n = nodes[i]
     #     vs[i] = evaluate(belief, policy, sim, pomdp, n, num_eval_belief)
