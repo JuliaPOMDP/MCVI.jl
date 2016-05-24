@@ -11,11 +11,11 @@ function test_LightDark1D()
     s0 = LightDark1DState(0,0)
     low0 = lowerbound(p, s0, rng)
     @test low0 == 9.0
-    s1, r = generate_sr(p, s0, +1, rng)
+    s1, _, r = generate_sor(p, s0, +1, rng)
     @test s1.y == 1.0
     @test r == 0.0
-    s2, r = generate_sr(p, s1, 0, rng)
-    @test s2.x != 0
+    s2, _, r = generate_sor(p, s1, 0, rng)
+    @test s2.status != 0
     @test r == -10
     s3 = LightDark1DState(0, 5)
     obs = generate_o(p, nothing, nothing, s3, rng)

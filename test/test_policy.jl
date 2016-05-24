@@ -38,8 +38,7 @@ function test_dummy_graph()
     sumv = 0.0
     for i in 1:1000
         ss = initial_state(p, rng)
-        sim.init_state = ss
-        sumv += MCVI.simulate(sim, p, policy, up, up.root)
+        sumv += MCVI.simulate(sim, p, policy, up, up.root, ss)
     end
     sumv /= 1000
     return abs(sumv - (-3.0)) <= 1
@@ -70,16 +69,13 @@ function test_dummy_graph2()
     MCVI.addnode!(up, rn2)
     up.root = rn2
 
-    # s0 = initial_state(pomdp)
-    # sim = MCVISimulator(MersenneTwister(420), s0, up.root, 1)
     sim = MCVISimulator()
     policy = MCVIPolicy(pomdp, up)
     dump_json(policy, "/tmp/test_policy.json")
     sumv = 0.0
     for i in 1:1000
         ss = initial_state(pomdp, rng)
-        sim.init_state = ss
-        sumv += MCVI.simulate(sim, pomdp, policy, up, up.root)
+        sumv += MCVI.simulate(sim, pomdp, policy, up, up.root, ss)
     end
     sumv /= 1000
     println(sumv)
