@@ -33,11 +33,11 @@ Hyperparameters:
     - `num_state`       : Number of states to sample from belief [default 500?]
     - `num_prune_obs`   : Number of times to sample observation while pruning alpha edges [default 1000?]
     - `num_eval_belief` : Number of times to simulate while evaluating belief [default 5000?]
+    - `num_obs`         : [default 50?]
 """
 type MCVISolver <: POMDPs.Solver
     simulator::POMDPs.Simulator
     root::Nullable{BeliefNode}
-    rng::AbstractRNG
 
     n_iter::Int64
     num_particles::Int64
@@ -49,8 +49,8 @@ type MCVISolver <: POMDPs.Solver
     num_obs::Int64
     scratch::Nullable{Scratch}
     MCVISolver() = new()
-    function MCVISolver(sim, root, rng, n_iter, nbp, ob, ns, npo, neb, num_obs)
-        new(sim, root, rng, n_iter, nbp, ob, ns, npo, neb, num_obs, Nullable{Scratch}())
+    function MCVISolver(sim, root, n_iter, nbp, ob, ns, npo, neb, num_obs)
+        new(sim, root, n_iter, nbp, ob, ns, npo, neb, num_obs, Nullable{Scratch}())
     end
 end
 
@@ -85,6 +85,7 @@ function expand!(bn::BeliefNode, solver::MCVISolver, pomdp::POMDPs.POMDP)
         act_node = ActionNode(a, bel, upper, imm_r, Vector{BeliefNode}())
         push!(bn.children, act_node)
     end
+    @assert length(bn.children) == n_actions(pomdp)
 end
 
 """
@@ -149,7 +150,7 @@ function backup!(an::ActionNode, solver::MCVISolver, pomdp::POMDPs.POMDP)
         an.upper = u
     end
 end
-stack_size = 0
+# stack_size = 0
 """
 Search over belief
 """
@@ -177,9 +178,9 @@ function search!{S,A,O}(bn::BeliefNode, solver::MCVISolver, policy::MCVIPolicy, 
                 choice = Nullable(ac)
             end
         end
-        global stack_size
-        stack_size += 1
-        println("=============== $stack_size ===============")
+        # global stack_size
+        # stack_size += 1
+        # println("=============== $stack_size ===============")
         # Seach over action
         search!(get(choice), solver, policy, pomdp, target_gap)
     end
@@ -192,9 +193,9 @@ Search over action
 """
 function search!(an::ActionNode, solver::MCVISolver, policy::MCVIPolicy, pomdp::POMDPs.POMDP, target_gap::Float64)
     println("act -> $(an.act) \t $(an.upper)")
-    if isterminal(pomdp, an.act) # FIXME Original MCVI searches until maxtime :( I could do that.
-        return nothing
-    end
+    # if isterminal(pomdp, an.act) # FIXME Original MCVI searches until maxtime :( I could do that.
+    #     return nothing
+    # end
     # Expand action
     expand!(an, solver, pomdp)
     max_gap = 0.0
@@ -202,6 +203,7 @@ function search!(an::ActionNode, solver::MCVISolver, policy::MCVIPolicy, pomdp::
     for b in an.children
         gap = b.upper - b.lower
         # Choose the belief that maximizes the gap bw upper and lower
+        println("gap=$gap, maxgap=$max_gap")
         if gap > max_gap
             max_gap = gap
             choice = Nullable(b)

@@ -8,7 +8,7 @@ function test_solve()
     println("...Solved")
     up = updater(policy)
     reward = simulate(sim, prob, policy, up, up.root)
-    println(reward)
+    println("Reward:", reward)
     return true
 end
 

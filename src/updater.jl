@@ -71,7 +71,7 @@ function compute_alpha_edges{S,A}(nodes::Vector{MCVINode}, actback::MCVIActionBa
     sa = actback.sa
     scratch.X = zeros(size(scratch.X,1), length(sa))
     alpha_edges = Vector{AlphaEdge}(length(nodes))
-    println("len_nodes: $(length(nodes))")
+    # println("len_nodes: $(length(nodes))")
     tic()
     alpha_edges = pmap((n)->compute(sa, policy, sim, pomdp, n), nodes) # FIXME simple
     # for (i,n) in enumerate(nodes)
