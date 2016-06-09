@@ -1,0 +1,24 @@
+site_name:        MCVI.jl
+repo_url:         https://github.com/JuliaPOMDP/MCVI.jl
+site_description: Implements the MCVI Algorithm for Solving POMDPs
+site_author:      Jayesh K. Gupta
+
+theme: readthedocs
+
+extra_css:
+  - assets/Documenter.css
+
+extra_javascript:
+  - https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML
+  - assets/mathjaxhelper.js
+
+markdown_extensions:
+  - extra
+  - tables
+  - fenced_code
+
+docs_dir: 'build'
+
+pages:
+  - Home: index.md
+  - Solver: solver.md
