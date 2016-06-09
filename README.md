@@ -17,3 +17,4 @@ Pkg.clone("https://github.com/JuliaPOMDP/MCVI.jl")
 
 ## Documentation
 
+See [here](http://juliapomdp.github.io/MCVI.jl/)
