@@ -146,14 +146,14 @@ end
 """
 Backup belief
 """
-function backup(bb::MCVIBeliefBackup, policy::MCVIPolicy, sim::MCVISimulator, pomdp::POMDPs.POMDP, num_prune_obs::Int64, num_eval_belief::Int64, scratch::Scratch)
+function backup(bb::MCVIBeliefBackup, policy::MCVIPolicy, sim::MCVISimulator, pomdp::POMDPs.POMDP, num_prune_obs::Int64, num_eval_belief::Int64, scratch::Scratch; debug=false)
     # Get newer nodes
     nodes = policy.updater.nodes_queue[bb.last_index:end]
     # Update best belief
     tic()
     update!(bb, nodes, pomdp, policy, sim, -0.1, num_eval_belief) # Try ϵ less
-    print_with_color(:cyan, "update")
-    println(" (nodes): $(toq())s")
+    debug && print_with_color(:cyan, "update")
+    debug && println(" (nodes): $(toq())s")
 
     # Get new nodes from action backup
     tic()
@@ -161,8 +161,8 @@ function backup(bb::MCVIBeliefBackup, policy::MCVIPolicy, sim::MCVISimulator, po
     for (i, actback) in enumerate(bb.act_backupers)
         new_nodes[i] = backup(actback, policy, sim, pomdp, nodes, num_prune_obs, scratch) # Backup action, FIXME Slowwww
     end
-    print_with_color(:cyan, "backup action")
-    println(" (nodes): $(toq())s")
+    debug && print_with_color(:cyan, "backup action")
+    debug && println(" (nodes): $(toq())s")
 
     bb.last_index += length(nodes)
     update!(bb, new_nodes, pomdp, policy, sim, +0.1, num_eval_belief) # Try ϵ more

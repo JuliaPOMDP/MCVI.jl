@@ -27,13 +27,14 @@ BeliefNode{O,A}(obs::Nullable{O}, b::MCVIBelief, u::Reward, l::Reward, bn::Nulla
 """
 
 Hyperparameters:
-    - `n_iter`          : Number of iterations
-    - `num_particles`   : Number of belief particles to be used
-    - `obs_branch`      : Branching factor [default 8?]
-    - `num_state`       : Number of states to sample from belief [default 500?]
-    - `num_prune_obs`   : Number of times to sample observation while pruning alpha edges [default 1000?]
-    - `num_eval_belief` : Number of times to simulate while evaluating belief [default 5000?]
-    - `num_obs`         : [default 50?]
+
+- `n_iter`          : Number of iterations
+- `num_particles`   : Number of belief particles to be used
+- `obs_branch`      : Branching factor [default 8?]
+- `num_state`       : Number of states to sample from belief [default 500?]
+- `num_prune_obs`   : Number of times to sample observation while pruning alpha edges [default 1000?]
+- `num_eval_belief` : Number of times to simulate while evaluating belief [default 5000?]
+- `num_obs`         : [default 50?]
 """
 type MCVISolver <: POMDPs.Solver
     simulator::POMDPs.Simulator
@@ -65,7 +66,7 @@ create_policy(::MCVISolver, p::POMDPs.POMDP) = MCVIPolicy(p)
 """
 Expand beliefs (Add new action nodes)
 """
-function expand!(bn::BeliefNode, solver::MCVISolver, pomdp::POMDPs.POMDP)
+function expand!(bn::BeliefNode, solver::MCVISolver, pomdp::POMDPs.POMDP; debug=false)
     if !isempty(bn.children)
         return nothing
     end
@@ -80,8 +81,8 @@ function expand!(bn::BeliefNode, solver::MCVISolver, pomdp::POMDPs.POMDP)
         # Initialize using problem upper value
             upper = upperbound(bel, pomdp, solver.simulator.rng)
         end
-        print_with_color(:yellow, "expand")
-        println(" (belief) -> $(a) \t $(imm_r) \t $(upper)")
+        debug && print_with_color(:yellow, "expand")
+        debug && println(" (belief) -> $(a) \t $(imm_r) \t $(upper)")
         act_node = ActionNode(a, bel, upper, imm_r, Vector{BeliefNode}())
         push!(bn.children, act_node)
     end
@@ -112,7 +113,7 @@ end
 """
 Backup over belief
 """
-function backup!(bn::BeliefNode, solver::MCVISolver, policy::MCVIPolicy, pomdp::POMDPs.POMDP)
+function backup!(bn::BeliefNode, solver::MCVISolver, policy::MCVIPolicy, pomdp::POMDPs.POMDP; debug=false)
     # Upper value
     u = -Inf
     for a in bn.children
@@ -127,8 +128,8 @@ function backup!(bn::BeliefNode, solver::MCVISolver, policy::MCVIPolicy, pomdp::
     # Increase lower value
     policy_node, node_val = backup(bn.belief, policy, solver.simulator, pomdp, solver.num_state,
                                    solver.num_prune_obs, solver.num_eval_belief, get(solver.scratch)) # Backup belief
-    print_with_color(:magenta, "backup")
-    println(" (belief) -> $(node_val) \t $(bn.lower)")
+    debug && print_with_color(:magenta, "backup")
+    debug && println(" (belief) -> $(node_val) \t $(bn.lower)")
     if node_val > bn.lower
         bn.lower = node_val
         bn.best_node = policy_node
@@ -154,15 +155,11 @@ end
 """
 Search over belief
 """
-function search!{S,A,O}(bn::BeliefNode, solver::MCVISolver, policy::MCVIPolicy, pomdp::POMDPs.POMDP{S,A,O}, target_gap::Float64)
-    try
-        println("belief -> $(get(bn.obs)) \t $(bn.upper) \t $(bn.lower)")
-    catch e
-        if isa(e, NullException)
-            println("belief -> nothing \t $(bn.upper) \t $(bn.lower)")
-        else
-            throw(e)
-        end
+function search!{S,A,O}(bn::BeliefNode, solver::MCVISolver, policy::MCVIPolicy, pomdp::POMDPs.POMDP{S,A,O}, target_gap::Float64; debug=false)
+    if isnull(bn.obs)
+        debug && println("belief -> nothing \t $(bn.upper) \t $(bn.lower)")
+    else
+        debug && println("belief -> $(get(bn.obs)) \t $(bn.upper) \t $(bn.lower)")
     end
     if (bn.upper - bn.lower) > target_gap
         # Add child action nodes to belief node
@@ -191,8 +188,8 @@ end
 """
 Search over action
 """
-function search!(an::ActionNode, solver::MCVISolver, policy::MCVIPolicy, pomdp::POMDPs.POMDP, target_gap::Float64)
-    println("act -> $(an.act) \t $(an.upper)")
+function search!(an::ActionNode, solver::MCVISolver, policy::MCVIPolicy, pomdp::POMDPs.POMDP, target_gap::Float64; debug=false)
+    debug && println("act -> $(an.act) \t $(an.upper)")
     # if isterminal(pomdp, an.act) # FIXME Original MCVI searches until maxtime :( I could do that.
     #     return nothing
     # end
@@ -203,7 +200,7 @@ function search!(an::ActionNode, solver::MCVISolver, policy::MCVIPolicy, pomdp::
     for b in an.children
         gap = b.upper - b.lower
         # Choose the belief that maximizes the gap bw upper and lower
-        println("gap=$gap, maxgap=$max_gap")
+        debug && println("gap=$gap, maxgap=$max_gap")
         if gap > max_gap
             max_gap = gap
             choice = Nullable(b)
@@ -211,7 +208,7 @@ function search!(an::ActionNode, solver::MCVISolver, policy::MCVIPolicy, pomdp::
     end
     # If we found anything that improved the difference
     if !isnull(choice)
-        search!(get(choice), solver, policy, pomdp, target_gap/discount(pomdp))
+        search!(get(choice), solver, policy, pomdp, target_gap/discount(pomdp), debug=debug)
     else
         println("Gap closed!")
     end
@@ -222,7 +219,7 @@ end
 """
 Solve function
 """
-function solve(solver::MCVISolver, pomdp::POMDPs.POMDP, policy::MCVIPolicy=create_policy(solver, pomdp))
+function solve(solver::MCVISolver, pomdp::POMDPs.POMDP, policy::MCVIPolicy=create_policy(solver, pomdp); debug=false)
     if isnull(solver.root)
         initialize_root!(solver, pomdp)
     end
@@ -237,14 +234,14 @@ function solve(solver::MCVISolver, pomdp::POMDPs.POMDP, policy::MCVIPolicy=creat
         global stack_size
         stack_size = 0
         tic()
-        search!(get(solver.root), solver, policy, pomdp, target_gap) # Here solver.root is a BeliefNode
+        search!(get(solver.root), solver, policy, pomdp, target_gap, debug=debug) # Here solver.root is a BeliefNode
         policy.updater.root = get(get(solver.root).best_node)             # Here policy.updater.root is a MCVINode
 
         if (get(solver.root).upper - get(solver.root).lower) < 0.1
             break
         end
-        print_with_color(:green, "iter $(i) \t")
-        println("upper: $(get(solver.root).upper) \t lower: $(get(solver.root).lower) \t time: $(toq())")
+        debug && print_with_color(:green, "iter $(i) \t")
+        debug && println("upper: $(get(solver.root).upper) \t lower: $(get(solver.root).lower) \t time: $(toq())")
 
     end
     return policy
