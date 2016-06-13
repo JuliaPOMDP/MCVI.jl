@@ -4,6 +4,7 @@ using POMDPs
 import POMDPs: create_state, discount, isterminal, pdf, actions, iterator, n_actions
 using GenerativeModels
 import GenerativeModels: generate_sor, generate_o, initial_state
+import POMDPBounds: lower_bound, upper_bound, Bound
 
 # Model
 # -----
@@ -120,12 +121,20 @@ function init_lower_action(p::LightDark1D)
     return 0 # Worst? This depends on the initial state? TODO
 end
 
-function lowerbound(p::LightDark1D, s::LightDark1DState, rng::AbstractRNG)
-    _, _, r = generate_sor(p, s, init_lower_action(p), rng)
+type LightDark1DLowerBound <: Bound
+    rng::AbstractRNG
+end
+
+type LightDark1DUpperBound <: Bound
+    rng::AbstractRNG
+end
+
+function lower_bound(lb::LightDark1DLowerBound, p::LightDark1D, s::LightDark1DState)
+    _, _, r = generate_sor(p, s, init_lower_action(p), lb.rng)
     return r * discount(p)
 end
 
-function upperbound(p::LightDark1D, s::LightDark1DState, rng::AbstractRNG)
+function upper_bound(ub::LightDark1DUpperBound, p::LightDark1D, s::LightDark1DState)
     steps = abs(s.y)/p.step_size + 1
     return p.correct_r*(discount(p)^steps)
 end

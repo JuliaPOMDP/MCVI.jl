@@ -1,15 +1,17 @@
 using MCVI
 using Base.Test
-import MCVI: lowerbound, upperbound, init_lower_action
+import MCVI: init_lower_action
 
 include("LightDark.jl")
 
 function test_LightDark1D()
     rng = MersenneTwister(42)
+    ub = LightDark1DUpperBound(rng)
+    lb = LightDark1DLowerBound(rng)
     p = LightDark1D()
     @test discount(p) == 0.9
     s0 = LightDark1DState(0,0)
-    low0 = lowerbound(p, s0, rng)
+    low0 = lower_bound(lb, p, s0)
     @test low0 == 9.0
     s1, _, r = generate_sor(p, s0, +1, rng)
     @test s1.y == 1.0

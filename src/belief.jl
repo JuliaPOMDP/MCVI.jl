@@ -72,31 +72,31 @@ end
 
 
 """
-    lowerbound(b::MCVIBelief{S}, pomdp::POMDPs.POMDP, rng::AbstractRNG)
+    lower_bound(b::MCVIBelief{S}, pomdp::POMDPs.POMDP, rng::AbstractRNG)
 
 Provides the minimum sum of particle values in a belief
 """
-function lowerbound(b::MCVIBelief, pomdp::POMDPs.POMDP, rng::AbstractRNG)
+function lower_bound(lb::Bound, pomdp::POMDPs.POMDP, b::MCVIBelief)
     sum = 0.0
     for (i, w) in enumerate(b.weights)
         s = particle(b.space, i)
         w = b.weights[i]
-        sum += lowerbound(pomdp, s, rng) * w # Weighted lower bound for the state
+        sum += lower_bound(lb, pomdp, s) * w # Weighted lower bound for the state
     end
     return sum
 end
 
 """
-    upperbound(b::MCVIBelief{S}, pomdp::POMDPs.POMDP, rng::AbstractRNG)
+    upper_bound(b::MCVIBelief{S}, pomdp::POMDPs.POMDP, rng::AbstractRNG)
 
 Provides the maximum sum of particle values in a belief
 """
-function upperbound(b::MCVIBelief, pomdp::POMDPs.POMDP, rng::AbstractRNG)
+function upper_bound(ub::Bound, pomdp::POMDPs.POMDP, b::MCVIBelief)
     sum = 0.0
     for (i, w) in enumerate(b.weights)
         s = particle(b.space, i)
         w = b.weights[i]
-        sum += upperbound(pomdp, s, rng) * w # Weighted upper bound for the state
+        sum += upper_bound(ub, pomdp, s) * w # Weighted upper bound for the state
     end
     return sum
 end

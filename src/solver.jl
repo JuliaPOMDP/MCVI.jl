@@ -39,7 +39,6 @@ Hyperparameters:
 type MCVISolver <: POMDPs.Solver
     simulator::POMDPs.Simulator
     root::Nullable{BeliefNode}
-
     n_iter::Int64
     num_particles::Int64
     obs_branch::Int64
@@ -48,16 +47,18 @@ type MCVISolver <: POMDPs.Solver
     num_eval_belief::Int64
 
     num_obs::Int64
+    lbound::Bound
+    ubound::Bound
     scratch::Nullable{Scratch}
     MCVISolver() = new()
-    function MCVISolver(sim, root, n_iter, nbp, ob, ns, npo, neb, num_obs)
-        new(sim, root, n_iter, nbp, ob, ns, npo, neb, num_obs, Nullable{Scratch}())
+    function MCVISolver(sim, root, n_iter, nbp, ob, ns, npo, neb, num_obs, lb, ub)
+        new(sim, root, n_iter, nbp, ob, ns, npo, neb, num_obs, lb, ub, Nullable{Scratch}())
     end
 end
 
 function initialize_root!{S,A,O}(solver::MCVISolver, pomdp::POMDPs.POMDP{S,A,O})
     b0 = initial_belief(pomdp, solver.num_particles, solver.simulator.rng)
-    solver.root = BeliefNode(Nullable{O}(), b0, upperbound(b0, pomdp, solver.simulator.rng), lowerbound(b0, pomdp, solver.simulator.rng), Nullable{MCVINode}(), Vector{TreeNode}())
+    solver.root = BeliefNode(Nullable{O}(), b0, upper_bound(solver.ubound, pomdp, b0), lower_bound(solver.lbound, pomdp, b0), Nullable{MCVINode}(), Vector{TreeNode}())
     solver.scratch = Scratch(Vector{O}(solver.num_obs), zeros(solver.num_obs), zeros(solver.num_obs), zeros(solver.num_obs, 2))
 end
 
@@ -79,7 +80,7 @@ function expand!(bn::BeliefNode, solver::MCVISolver, pomdp::POMDPs.POMDP; debug=
             upper = imm_r*discount(pomdp)
         else
         # Initialize using problem upper value
-            upper = upperbound(bel, pomdp, solver.simulator.rng)
+            upper = upper_bound(solver.ubound, pomdp, bel)
         end
         debug && print_with_color(:yellow, "expand")
         debug && println(" (belief) -> $(a) \t $(imm_r) \t $(upper)")
@@ -102,8 +103,8 @@ function expand!{A}(an::ActionNode{A}, solver::MCVISolver, pomdp::POMDPs.POMDP)
         obs = generate_o(pomdp, nothing, nothing, s, solver.simulator.rng)
         bel = next(an.belief, obs, pomdp) # Next belief by observation
 
-        upper = upperbound(bel, pomdp, solver.simulator.rng)
-        lower = lowerbound(bel, pomdp, solver.simulator.rng)
+        upper = upper_bound(solver.ubound, pomdp, bel)
+        lower = lower_bound(solver.lbound, pomdp, bel)
 
         belief_node = BeliefNode(Nullable(obs), bel, upper, lower, Nullable{MCVINode}(), Vector{ActionNode{A}}())
         push!(an.children, belief_node)
