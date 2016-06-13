@@ -191,9 +191,9 @@ Search over action
 """
 function search!(an::ActionNode, solver::MCVISolver, policy::MCVIPolicy, pomdp::POMDPs.POMDP, target_gap::Float64; debug=false)
     debug && println("act -> $(an.act) \t $(an.upper)")
-    # if isterminal(pomdp, an.act) # FIXME Original MCVI searches until maxtime :( I could do that.
-    #     return nothing
-    # end
+    if isterminal(pomdp, an.act) # FIXME Original MCVI searches until maxtime :( I could do that.
+        return nothing
+    end
     # Expand action
     expand!(an, solver, pomdp)
     max_gap = 0.0
