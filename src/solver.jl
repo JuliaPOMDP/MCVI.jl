@@ -93,7 +93,7 @@ end
 """
 Expand actions (Add new belief nodes)
 """
-function expand!{A}(an::ActionNode{A}, solver::MCVISolver, pomdp::POMDPs.POMDP)
+function expand!{A}(an::ActionNode{A}, solver::MCVISolver, pomdp::POMDPs.POMDP; debug=false)
     if !isempty(an.children)
         return nothing
     end
@@ -128,7 +128,7 @@ function backup!(bn::BeliefNode, solver::MCVISolver, policy::MCVIPolicy, pomdp::
 
     # Increase lower value
     policy_node, node_val = backup(bn.belief, policy, solver.simulator, pomdp, solver.num_state,
-                                   solver.num_prune_obs, solver.num_eval_belief, get(solver.scratch)) # Backup belief
+                                   solver.num_prune_obs, solver.num_eval_belief, get(solver.scratch), debug=debug) # Backup belief
     debug && print_with_color(:magenta, "backup")
     debug && println(" (belief) -> $(node_val) \t $(bn.lower)")
     if node_val > bn.lower
@@ -164,7 +164,7 @@ function search!{S,A,O}(bn::BeliefNode, solver::MCVISolver, policy::MCVIPolicy, 
     end
     if (bn.upper - bn.lower) > target_gap
         # Add child action nodes to belief node
-        expand!(bn, solver, pomdp)
+        expand!(bn, solver, pomdp, debug=debug)
         max_upper = -Inf
         local choice = Nullable{ActionNode{A}}()
         for ac in bn.children
@@ -180,7 +180,7 @@ function search!{S,A,O}(bn::BeliefNode, solver::MCVISolver, policy::MCVIPolicy, 
         # stack_size += 1
         # println("=============== $stack_size ===============")
         # Seach over action
-        search!(get(choice), solver, policy, pomdp, target_gap)
+        search!(get(choice), solver, policy, pomdp, target_gap, debug=debug)
     end
     # backup belief
     backup!(bn, solver, policy, pomdp)
@@ -195,7 +195,7 @@ function search!(an::ActionNode, solver::MCVISolver, policy::MCVIPolicy, pomdp::
         return nothing
     end
     # Expand action
-    expand!(an, solver, pomdp)
+    expand!(an, solver, pomdp, debug=debug)
     max_gap = 0.0
     local choice = Nullable{BeliefNode}()
     for b in an.children
