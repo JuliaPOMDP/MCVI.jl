@@ -36,7 +36,7 @@ hasnode(ps::MCVIUpdater, n::MCVINode) = haskey(ps.nodes, n.id)
 
 create_belief(ps::MCVIUpdater) = MCVINode()
 
-function create_node{S,A}(ps::MCVIUpdater, a::A, states::Union{Void,S}, alpha_edges::Vector{AlphaEdge})
+function create_node{A}(ps::MCVIUpdater, a::A, states::Any, alpha_edges::Vector{AlphaEdge})
     if states == nothing
         st_hash = Base.hash(states)
     else

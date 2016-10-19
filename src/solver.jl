@@ -21,7 +21,6 @@ type ActionNode{A} <: TreeNode
     children::Vector{BeliefNode}
 end
 
-BeliefNode{O}(obs::Nullable{O}, b::MCVIBelief, u::Reward, l::Reward, bn::Nullable{MCVINode}, c::Vector{TreeNode}) = BeliefNode{O}(obs, b, u, l, bn, c)
 BeliefNode{O,A}(obs::Nullable{O}, b::MCVIBelief, u::Reward, l::Reward, bn::Nullable{MCVINode}, c::Vector{ActionNode{A}}) = BeliefNode{O}(obs, b, u, l, bn, c)
 
 """
