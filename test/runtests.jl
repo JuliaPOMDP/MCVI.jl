@@ -1,31 +1,7 @@
 using MCVI
 using Base.Test
 import MCVI: init_lower_action
-
-include("LightDark.jl")
-
-function test_LightDark1D()
-    rng = MersenneTwister(42)
-    ub = LightDark1DUpperBound(rng)
-    lb = LightDark1DLowerBound(rng)
-    p = LightDark1D()
-    @test discount(p) == 0.9
-    s0 = LightDark1DState(0,0)
-    low0 = lower_bound(lb, p, s0)
-    @test low0 == 9.0
-    s1, _, r = generate_sor(p, s0, +1, rng)
-    @test s1.y == 1.0
-    @test r == 0.0
-    s2, _, r = generate_sor(p, s1, 0, rng)
-    @test s2.status != 0
-    @test r == -10
-    s3 = LightDark1DState(0, 5)
-    obs = generate_o(p, nothing, nothing, s3, rng)
-    @test abs(obs-5.0) <= 0.1
-    return true
-end
-
-@test test_LightDark1D()
+using POMDPModels # for LightDark1d
 
 include("test_policy.jl")
 
