@@ -5,7 +5,7 @@ using POMDPs
 import POMDPBounds: Bound, upper_bound, lower_bound
 import GenerativeModels: generate_sor, generate_o, initial_state
 
-import POMDPs: solve, action, create_policy, rand, simulate, updater
+import POMDPs: solve, action, rand, simulate, updater
 
 typealias Reward Float64
 
