@@ -71,12 +71,12 @@ function next{S,O}(bb::MCVIBelief{S}, obs::O, pomdp::POMDPs.POMDP)
 end
 
 
-"""
-    lower_bound(b::MCVIBelief{S}, pomdp::POMDPs.POMDP, rng::AbstractRNG)
-
-Provides the minimum sum of particle values in a belief
-"""
-function lower_bound(lb::Bound, pomdp::POMDPs.POMDP, b::MCVIBelief)
+# """
+#     lower_bound(b::MCVIBelief{S}, pomdp::POMDPs.POMDP, rng::AbstractRNG)
+# 
+# Provides the minimum sum of particle values in a belief
+# """
+function lower_bound(lb::Any, pomdp::POMDPs.POMDP, b::MCVIBelief)
     sum = 0.0
     for (i, w) in enumerate(b.weights)
         s = particle(b.space, i)
@@ -86,12 +86,12 @@ function lower_bound(lb::Bound, pomdp::POMDPs.POMDP, b::MCVIBelief)
     return sum
 end
 
-"""
-    upper_bound(b::MCVIBelief{S}, pomdp::POMDPs.POMDP, rng::AbstractRNG)
-
-Provides the maximum sum of particle values in a belief
-"""
-function upper_bound(ub::Bound, pomdp::POMDPs.POMDP, b::MCVIBelief)
+# """
+#     upper_bound(b::MCVIBelief{S}, pomdp::POMDPs.POMDP, rng::AbstractRNG)
+# 
+# Provides the maximum sum of particle values in a belief
+# """
+function upper_bound(ub::Any, pomdp::POMDPs.POMDP, b::MCVIBelief)
     sum = 0.0
     for (i, w) in enumerate(b.weights)
         s = particle(b.space, i)

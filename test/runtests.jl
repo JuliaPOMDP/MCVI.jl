@@ -1,8 +1,29 @@
 using MCVI
 using Base.Test
-import MCVI: init_lower_action
-using POMDPModels # for LightDark1d
+import MCVI: init_lower_action, lower_bound, upper_bound
 using POMDPs
+using GenerativeModels
+
+using POMDPModels # for LightDark1d
+
+# Bounds
+type LightDark1DLowerBound
+    rng::AbstractRNG
+end
+
+type LightDark1DUpperBound
+    rng::AbstractRNG
+end
+
+function lower_bound(lb::LightDark1DLowerBound, p::LightDark1D, s::LightDark1DState)
+    _, _, r = generate_sor(p, s, init_lower_action(p), lb.rng)
+    return r * discount(p)
+end
+
+function upper_bound(ub::LightDark1DUpperBound, p::LightDark1D, s::LightDark1DState)
+    steps = abs(s.y)/p.step_size + 1
+    return p.correct_r*(discount(p)^steps)
+end
 
 function MCVI.init_lower_action(p::LightDark1D)
     return 0 # Worst? This depends on the initial state? XXX

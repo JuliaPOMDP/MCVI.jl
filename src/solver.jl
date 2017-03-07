@@ -34,6 +34,13 @@ Hyperparameters:
 - `num_prune_obs`   : Number of times to sample observation while pruning alpha edges [default 1000?]
 - `num_eval_belief` : Number of times to simulate while evaluating belief [default 5000?]
 - `num_obs`         : [default 50?]
+
+Bounds:
+
+- `lbound`          : An object representing the lower bound. The function `MCVI.lower_bound(lbound, problem, s)` will be called to get the lower bound for the state `s` - this function needs to be implemented for the solver to work.
+- `ubound`          : An object representing the upper bound. The function `MCVI.upper_bound(ubound, problem, s)` will be called to get the lower bound for the state `s` - this function needs to be implemented for the solver to work.
+
+See `$(Pkg.dir("MCVI","test","runtests.jl"))` for an example of bounds implemented for the Light Dark problem.
 """
 type MCVISolver <: POMDPs.Solver
     simulator::POMDPs.Simulator
@@ -46,8 +53,8 @@ type MCVISolver <: POMDPs.Solver
     num_eval_belief::Int64
 
     num_obs::Int64
-    lbound::Bound
-    ubound::Bound
+    lbound::Any
+    ubound::Any
     scratch::Nullable{Scratch}
     MCVISolver() = new()
     function MCVISolver(sim, root, n_iter, nbp, ob, ns, npo, neb, num_obs, lb, ub)
