@@ -71,7 +71,7 @@ function test_dummy_graph2()
 
     sim = MCVISimulator()
     policy = MCVIPolicy(pomdp, up)
-    dump_json(policy, "/tmp/test_policy.json")
+    dump_json(policy, joinpath(tempdir(), "test_policy.json"))
     sumv = 0.0
     for i in 1:1000
         ss = initial_state(pomdp, rng)
