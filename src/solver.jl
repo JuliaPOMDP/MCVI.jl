@@ -56,7 +56,6 @@ type MCVISolver <: POMDPs.Solver
     lbound::Any
     ubound::Any
     scratch::Nullable{Scratch}
-    MCVISolver() = new()
     function MCVISolver(sim, root, n_iter, nbp, ob, ns, npo, neb, num_obs, lb, ub)
         new(sim, root, n_iter, nbp, ob, ns, npo, neb, num_obs, lb, ub, Nullable{Scratch}())
     end
