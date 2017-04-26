@@ -20,13 +20,14 @@ copy(n::MCVINode) = MCVINode(n.id, n.act, n.states, n.alpha_edges)
 """
 Returns the next node in the policygraph
 """
-type MCVIUpdater <: POMDPs.Updater{MCVINode}
+type MCVIUpdater{P<:POMDP} <: POMDPs.Updater{MCVINode}
+    problem::P
     root
     nodes::Dict{UInt64, MCVINode}
     nodes_queue::Vector{MCVINode}
 end
 
-MCVIUpdater() = MCVIUpdater(nothing, Dict{UInt64, MCVINode}(), Vector{MCVINode}())
+MCVIUpdater(problem) = MCVIUpdater(problem, nothing, Dict{UInt64, MCVINode}(), Vector{MCVINode}())
 
 Base.length(ps::MCVIUpdater) = length(ps.nodes)
 
@@ -84,7 +85,7 @@ updater(policy::MCVIPolicy) = policy.updater
 Initialize and return the MCVIUpdater
 """
 function initialize_updater!(policy::MCVIPolicy)
-    ps = MCVIUpdater()
+    ps = MCVIUpdater(policy.problem)
     ns = init_nodes(policy, ps)
     for n in ns
         addnode!(ps, n)
@@ -106,7 +107,7 @@ function update{A,O}(ps::MCVIUpdater, n::MCVINode, act::A, obs::O, np::MCVINode=
         @assert n.states != nothing "No states in the current node"
         obs_wt = zeros(length(n.states))
         for (i,s) in enumerate(n.states)
-            obs_wt[i] = pdf(s, obs) # Observation weight
+            obs_wt[i] = obs_weight(ps.problem, act, s, obs)
         end
         maxv = -Inf
         for ae in n.alpha_edges

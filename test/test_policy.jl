@@ -13,7 +13,7 @@ function dummy_node2(up, nid1, nid2)
 end
 
 function build_dummy_graph(pomdp)
-    up = MCVIUpdater()
+    up = MCVIUpdater(pomdp)
     n0 = MCVI.init_node(up, pomdp)
     MCVI.addnode!(up, n0)
     n1 = dummy_node(up, n0.id)
@@ -47,7 +47,7 @@ end
 function test_dummy_graph2()
     rng = MersenneTwister(42)
     pomdp = LightDark1D()
-    up = MCVIUpdater()
+    up = MCVIUpdater(pomdp)
     n0 = MCVI.init_node(up, pomdp)
     MCVI.addnode!(up, n0)
     n1 = dummy_node(up, n0.id)

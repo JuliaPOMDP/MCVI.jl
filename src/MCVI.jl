@@ -2,7 +2,7 @@ module MCVI
 
 using JSON
 using POMDPs
-import GenerativeModels: generate_sor, generate_o, initial_state
+using ParticleFilters
 
 import POMDPs: solve, action, rand, simulate, updater
 

@@ -32,7 +32,7 @@ Returns an observation's weight for each particle in the subspace
 function weights{S,A,O}(ss::MCVISubspace{S,A}, obs::O, pomdp::POMDPs.POMDP)
     wts = zeros(length(ss))
     for i in 1:length(wts)
-        wts[i] = pdf(particle(ss, i), obs)
+        wts[i] = obs_weight(pomdp, particle(ss, i), obs)
     end
     return wts
 end

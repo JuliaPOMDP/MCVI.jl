@@ -41,7 +41,7 @@ function prune_alpha_edges{S,A}(alpha_edges, actback::MCVIActionBackup{S,A}, pom
         obs = generate_o(pomdp, nothing, nothing, rand(rng, ba), rng)
         obswt = zeros(length(sa))
         for (k,s) in enumerate(sa)
-            obswt[k] = pdf(s, obs)
+            obswt[k] = obs_weight(pomdp, s, obs)
         end
         maxv = -Inf
         local maxj::Int64
