@@ -2,7 +2,7 @@ using MCVI
 using Base.Test
 import MCVI: init_lower_action, lower_bound, upper_bound
 using POMDPs
-using GenerativeModels
+using POMDPToolbox
 
 using POMDPModels # for LightDark1d
 
@@ -43,6 +43,9 @@ include("test_belief.jl")
 @test test_belief()
 
 include("test_solve.jl")
-@test test_solve()
+# @test test_solve()
+
+include("test_simulation.jl")
+@test test_simulation()
 
 # @test test_dummy_heuristics()

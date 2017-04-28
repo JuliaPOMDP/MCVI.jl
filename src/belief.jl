@@ -14,8 +14,7 @@ Base.length(b::MCVIBelief) = length(b.weights)
 """
 Create initial belief particles
 Is supposed to represent the initial state distribution.
-TODO Should this be part of the problem definition?
-      Not sure how to propagate num_particles without storing it in pomdp or calling it a different function?
+Not sure how to propagate num_particles without storing it in pomdp or calling it a different function?
 """
 function initial_belief{S,A,O}(pomdp::POMDPs.POMDP{S,A,O}, num_particles::Int64, rng::AbstractRNG)
     particles = Vector{S}(num_particles)

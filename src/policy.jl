@@ -23,11 +23,12 @@ Returns the next node in the policygraph
 type MCVIUpdater{P<:POMDP} <: POMDPs.Updater{MCVINode}
     problem::P
     root
+    root_belief
     nodes::Dict{UInt64, MCVINode}
     nodes_queue::Vector{MCVINode}
 end
 
-MCVIUpdater(problem) = MCVIUpdater(problem, nothing, Dict{UInt64, MCVINode}(), Vector{MCVINode}())
+MCVIUpdater(problem) = MCVIUpdater(problem, nothing, nothing, Dict{UInt64, MCVINode}(), Vector{MCVINode}())
 
 Base.length(ps::MCVIUpdater) = length(ps.nodes)
 
@@ -36,6 +37,26 @@ hasroot(ps::MCVIUpdater) = ps.root != nothing
 hasnode(ps::MCVIUpdater, n::MCVINode) = haskey(ps.nodes, n.id)
 
 create_belief(ps::MCVIUpdater) = MCVINode()
+
+function initialize_belief(up::MCVIUpdater, b::Any)
+    if up.root_belief != b
+        if @implemented initial_state_distribution(::typeof(up.problem))
+            is = initial_state_distribution(up.problem)
+        else
+            is = "<initial_state_distribution(::$(typeof(up.problem))) not implemented>"
+        end
+        warn("""
+             The belief used to start MCVI policy execution was (potentially) different from the initial belief used in the MCVI solution.
+
+             updater root belief: $(up.root_belief)
+             b0 for policy execution: $b
+             initial_state_distribution(pomdp): $is
+             """)
+    end
+    return up.root
+end
+
+
 
 function create_node{A}(ps::MCVIUpdater, a::A, states::Any, alpha_edges::Vector{AlphaEdge})
     if states == nothing

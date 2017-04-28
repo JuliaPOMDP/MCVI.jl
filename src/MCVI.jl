@@ -4,7 +4,7 @@ using JSON
 using POMDPs
 using ParticleFilters
 
-import POMDPs: solve, action, rand, simulate, updater
+import POMDPs: solve, action, rand, simulate, updater, initialize_belief, update
 
 typealias Reward Float64
 
