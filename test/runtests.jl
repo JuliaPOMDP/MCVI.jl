@@ -2,7 +2,6 @@ using MCVI
 using Base.Test
 import MCVI: init_lower_action, lower_bound, upper_bound
 using POMDPs
-using GenerativeModels
 
 using POMDPModels # for LightDark1d
 
