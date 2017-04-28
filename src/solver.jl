@@ -242,11 +242,6 @@ function solve(solver::MCVISolver, pomdp::POMDPs.POMDP, policy::MCVIPolicy=creat
         tic()
         search!(get(solver.root), solver, policy, pomdp, target_gap, debug=debug) # Here solver.root is a BeliefNode
         policy.updater.root = get(get(solver.root).best_node)             # Here policy.updater.root is a MCVINode
-        if @implemented initial_state_distribution(::typeof(pomdp))
-            policy.updater.root_belief = initial_state_distribution(pomdp)
-        else
-            policy.updater.root_belief = nothing
-        end
 
         if (get(solver.root).upper - get(solver.root).lower) < 0.1
             break
@@ -255,5 +250,12 @@ function solve(solver::MCVISolver, pomdp::POMDPs.POMDP, policy::MCVIPolicy=creat
         debug && println("upper: $(get(solver.root).upper) \t lower: $(get(solver.root).lower) \t time: $(toq())")
 
     end
+
+    if @implemented initial_state_distribution(::typeof(pomdp))
+        policy.updater.root_belief = initial_state_distribution(pomdp)
+    else
+        policy.updater.root_belief = nothing
+    end
+
     return policy
 end
