@@ -43,7 +43,7 @@ include("test_belief.jl")
 @test test_belief()
 
 include("test_solve.jl")
-# @test test_solve()
+@test test_solve()
 
 include("test_simulation.jl")
 @test test_simulation()
