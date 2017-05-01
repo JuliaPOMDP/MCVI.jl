@@ -3,7 +3,6 @@ using Base.Test
 import MCVI: init_lower_action, lower_bound, upper_bound
 using POMDPs
 using POMDPToolbox
-using Gallium
 
 using POMDPModels # for LightDark1d
 
