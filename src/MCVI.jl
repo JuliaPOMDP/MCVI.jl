@@ -21,6 +21,6 @@ include("updater.jl")
 include("solver.jl")
 
 
-export MCVISolver, MCVIPolicy, solve, action, create_policy, MCVIUpdater, MCVISimulator, updater, dump_json, upper_bound, lower_bound
+export MCVISolver, MCVIPolicy, solve, action, MCVIUpdater, MCVISimulator, updater, dump_json, upper_bound, lower_bound
 
 end # module
