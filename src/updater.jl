@@ -1,4 +1,4 @@
-type MCVIActionBackup{S,A}
+mutable struct MCVIActionBackup{S,A}
     act::A
     ba::MCVIBelief
     sa::Vector{S}
@@ -9,7 +9,7 @@ type MCVIActionBackup{S,A}
 end
 
 
-type MCVIBeliefBackup
+mutable struct MCVIBeliefBackup
     belief::MCVIBelief
     act_backupers::Vector{MCVIActionBackup}
     last_index::Int64

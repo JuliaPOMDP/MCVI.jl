@@ -6,7 +6,7 @@ using ParticleFilters
 
 import POMDPs: solve, action, rand, simulate, updater, initialize_belief, update
 
-typealias Reward Float64
+const Reward = Float64
 
 function init_lower_action{S,A}(p::POMDPs.POMDP{S,A})
     error("`init_lower_action` Not Implemented")
@@ -21,6 +21,16 @@ include("updater.jl")
 include("solver.jl")
 
 
-export MCVISolver, MCVIPolicy, solve, action, MCVIUpdater, MCVISimulator, updater, dump_json, upper_bound, lower_bound
+export MCVISolver,
+       MCVIPolicy,
+
+       solve,
+       action,
+       MCVIUpdater,
+       MCVISimulator,
+       updater,
+       dump_json,
+       upper_bound,
+       lower_bound
 
 end # module

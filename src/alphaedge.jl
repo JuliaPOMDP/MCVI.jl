@@ -81,7 +81,7 @@ function _fill_X!{O,S}(X::Array{Float64,2}, obs::Vector{O}, sts::Vector{S})
     end
 end
 
-type Scratch{O}
+mutable struct Scratch{O}
     obs::Vector{O}
     ov::Vector{Float64}
     osum::Vector{Float64}
