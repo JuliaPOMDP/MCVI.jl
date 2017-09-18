@@ -1,10 +1,10 @@
-type AlphaEdge
+mutable struct AlphaEdge
     vec::Vector{Float64}
     id::UInt64
 end
 Base.hash(a::AlphaEdge, h::UInt64=zero(UInt64)) = hash(a.vec, hash(a.id, h))
 
-type MCVINode
+mutable struct MCVINode
     id::UInt64
     act::Any
     states::Any
@@ -20,7 +20,7 @@ copy(n::MCVINode) = MCVINode(n.id, n.act, n.states, n.alpha_edges)
 """
 Returns the next node in the policygraph
 """
-type MCVIUpdater{P<:POMDP} <: POMDPs.Updater{MCVINode}
+mutable struct MCVIUpdater{P<:POMDP} <: POMDPs.Updater
     problem::P
     root
     root_belief
@@ -70,7 +70,7 @@ function create_node{A}(ps::MCVIUpdater, a::A, states::Any, alpha_edges::Vector{
 end
 
 
-type MCVIPolicy <: POMDPs.Policy
+mutable struct MCVIPolicy <: POMDPs.Policy
     problem::POMDPs.POMDP
     updater::Union{Void, POMDPs.Updater}
     MCVIPolicy() = new()

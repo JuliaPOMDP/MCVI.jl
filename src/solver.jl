@@ -2,9 +2,9 @@ function action(policy::MCVIPolicy, node::MCVINode)
     return node.act             # Confused now. What should be the second argument again?
 end
 
-abstract TreeNode
+abstract type TreeNode end
 
-type BeliefNode{O} <: TreeNode
+mutable struct BeliefNode{O} <: TreeNode
     obs::Nullable{O}
     belief:: MCVIBelief
     upper::Reward
@@ -13,7 +13,7 @@ type BeliefNode{O} <: TreeNode
     children::Vector{TreeNode}
 end
 
-type ActionNode{A} <: TreeNode
+mutable struct ActionNode{A} <: TreeNode
     act::A
     belief:: MCVIBelief
     upper::Reward
@@ -42,7 +42,7 @@ Bounds:
 
 See `$(Pkg.dir("MCVI","test","runtests.jl"))` for an example of bounds implemented for the Light Dark problem.
 """
-type MCVISolver <: POMDPs.Solver
+mutable struct MCVISolver <: POMDPs.Solver
     simulator::POMDPs.Simulator
     root::Nullable{BeliefNode}
     n_iter::Int64

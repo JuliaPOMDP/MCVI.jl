@@ -1,7 +1,7 @@
 """
 Particle belief over subspaces
 """
-type MCVIBelief{S,A}
+mutable struct MCVIBelief{S,A}
     space::MCVISubspace{S,A}
     weights::Vector{Float64}
     id::UInt64
@@ -72,7 +72,7 @@ end
 
 # """
 #     lower_bound(b::MCVIBelief{S}, pomdp::POMDPs.POMDP, rng::AbstractRNG)
-# 
+#
 # Provides the minimum sum of particle values in a belief
 # """
 function lower_bound(lb::Any, pomdp::POMDPs.POMDP, b::MCVIBelief)
@@ -87,7 +87,7 @@ end
 
 # """
 #     upper_bound(b::MCVIBelief{S}, pomdp::POMDPs.POMDP, rng::AbstractRNG)
-# 
+#
 # Provides the maximum sum of particle values in a belief
 # """
 function upper_bound(ub::Any, pomdp::POMDPs.POMDP, b::MCVIBelief)

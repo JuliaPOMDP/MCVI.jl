@@ -1,4 +1,4 @@
-type MCVISimulator <: POMDPs.Simulator
+mutable struct MCVISimulator <: POMDPs.Simulator
     rng::AbstractRNG
     # init_state                  # In case we want to fix starting state
     times::Integer

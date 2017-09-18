@@ -7,11 +7,11 @@ using POMDPToolbox
 using POMDPModels # for LightDark1d
 
 # Bounds
-type LightDark1DLowerBound
+mutable struct LightDark1DLowerBound
     rng::AbstractRNG
 end
 
-type LightDark1DUpperBound
+mutable struct LightDark1DUpperBound
     rng::AbstractRNG
 end
 

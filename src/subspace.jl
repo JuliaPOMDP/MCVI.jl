@@ -1,7 +1,7 @@
 """
 Subspace of particles of states
 """
-type MCVISubspace{S,A}
+mutable struct MCVISubspace{S,A}
     particles::Vector{S}
     imm_rewards::Vector{Reward}
     next_state::Dict{A,MCVISubspace{S,A}}
