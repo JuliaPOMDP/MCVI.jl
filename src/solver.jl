@@ -259,3 +259,24 @@ function solve(solver::MCVISolver, pomdp::POMDPs.POMDP, policy::MCVIPolicy=creat
 
     return policy
 end
+
+
+@POMDP_require solve(solver::MCVISolver, pomdp::POMDP) begin
+    P = typeof(pomdp)
+    S = state_type(P)
+    A = action_type(P)
+    O = obs_type(P)
+    LB = typeof(solver.lbound)
+    UB = typeof(solver.ubound)
+    @req actions(::P)
+    @req n_actions(::P)
+    @req generate_sr(::P, ::S, ::A, ::AbstractRNG)
+    @req generate_o(::P, ::S, ::A, ::S, ::AbstractRNG)
+    @req initial_state(::P, ::AbstractRNG)
+    @req lower_bound(::LB, ::P, ::S)
+    @req upper_bound(::UB, ::P, ::S)
+    @req init_lower_action(::P)
+    @req isterminal(::P, ::A)
+    @req isterminal(::P, ::S)
+    @req discount(::P)
+end

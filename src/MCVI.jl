@@ -8,9 +8,8 @@ import POMDPs: solve, action, rand, simulate, updater, initialize_belief, update
 
 const Reward = Float64
 
-function init_lower_action{S,A}(p::POMDPs.POMDP{S,A})
-    error("`init_lower_action` Not Implemented")
-end
+# implementation warning handled by POMDPrequire
+function init_lower_action end
 
 include("subspace.jl")
 include("belief.jl")

@@ -25,7 +25,7 @@ function upper_bound(ub::LightDark1DUpperBound, p::LightDark1D, s::LightDark1DSt
     return p.correct_r*(discount(p)^steps)
 end
 
-function MCVI.init_lower_action(p::LightDark1D)
+function init_lower_action(p::LightDark1D)
     return 0 # Worst? This depends on the initial state? XXX
 end
 
@@ -47,5 +47,8 @@ include("test_solve.jl")
 
 include("test_simulation.jl")
 test_simulation()
+
+include("test_requirements.jl")
+test_requirements()
 
 # @test test_dummy_heuristics()
