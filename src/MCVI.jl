@@ -6,6 +6,7 @@ using ParticleFilters
 using Random
 using Printf
 using Distributed
+using LinearAlgebra
 import Statistics
 import POMDPs: solve, action, rand, simulate, updater, initialize_belief, update
 

@@ -63,8 +63,8 @@ end
 
 function initialize_root!(solver::MCVISolver, pomdp::POMDPs.POMDP{S,A,O}) where {S,A,O}
     b0 = initial_belief(pomdp, solver.num_particles, solver.simulator.rng)
-    solver.root = BeliefNode(nothing, b0, upper_bound(solver.ubound, pomdp, b0), lower_bound(solver.lbound, pomdp, b0), nothing, Vector{TreeNode}())
-    solver.scratch = Scratch(Vector{O}(solver.num_obs), zeros(solver.num_obs), zeros(solver.num_obs), zeros(solver.num_obs, 2))
+    solver.root = BeliefNode{O}(nothing, b0, upper_bound(solver.ubound, pomdp, b0), lower_bound(solver.lbound, pomdp, b0), nothing, Vector{TreeNode}())
+    solver.scratch = Scratch(Vector{O}(undef, solver.num_obs), zeros(solver.num_obs), zeros(solver.num_obs), zeros(solver.num_obs, 2))
 end
 
 create_policy(::MCVISolver, p::POMDPs.POMDP) = MCVIPolicy(p)
@@ -77,7 +77,7 @@ function expand!(bn::BeliefNode, solver::MCVISolver, pomdp::POMDPs.POMDP; debug=
         return nothing
     end
 
-    for a in iterator(actions(pomdp))
+    for a in actions(pomdp)
         bel = next(bn.belief, a, pomdp, solver.simulator.rng) # Next belief by action
         imm_r = reward(bel, pomdp)
         local upper::Float64
@@ -221,8 +221,8 @@ end
 """
 Solve function
 """
-function solve(solver::MCVISolver, pomdp::POMDPs.POMDP, policy::MCVIPolicy=create_policy(solver, pomdp); debug=false)
-    if isnull(solver.root)
+function solve(solver::MCVISolver, pomdp::POMDPs.POMDP{S,A,O}, policy::MCVIPolicy=create_policy(solver, pomdp); debug=false) where {S,A,O}
+    if solver.root == nothing
         initialize_root!(solver, pomdp)
     end
     # Gap between upper and lower
@@ -235,20 +235,20 @@ function solve(solver::MCVISolver, pomdp::POMDPs.POMDP, policy::MCVIPolicy=creat
     for i in 1:solver.n_iter
         global stack_size
         stack_size = 0
-        tic()
-        search!(solver.root, solver, policy, pomdp, target_gap, debug=debug) # Here solver.root is a BeliefNode
-        policy.updater.root = solver.root.best_node             # Here policy.updater.root is a MCVINode
+        t = @elapsed begin
+            search!(solver.root, solver, policy, pomdp, target_gap, debug=debug) # Here solver.root is a BeliefNode
+            policy.updater.root = solver.root.best_node             # Here policy.updater.root is a MCVINode
 
-        if (solver.root.upper - solver.root.lower) < 0.1
-            break
+            if (solver.root.upper - solver.root.lower) < 0.1
+                break
+            end
         end
         debug && print_with_color(:green, "iter $(i) \t")
-        debug && println("upper: $(get(solver.root).upper) \t lower: $(get(solver.root).lower) \t time: $(toq())")
-
+        debug && println("upper: $(get(solver.root).upper) \t lower: $(get(solver.root).lower) \t time: $(t)")
     end
 
-    if @implemented initial_state_distribution(::typeof(pomdp))
-        policy.updater.root_belief = initial_state_distribution(pomdp)
+    if @implemented initialstate_distribution(::typeof(pomdp))
+        policy.updater.root_belief = initialstate_distribution(pomdp)
     else
         policy.updater.root_belief = nothing
     end
@@ -259,16 +259,16 @@ end
 
 @POMDP_require solve(solver::MCVISolver, pomdp::POMDP) begin
     P = typeof(pomdp)
-    S = state_type(P)
-    A = action_type(P)
-    O = obs_type(P)
+    S = statetype(P)
+    A = actiontype(P)
+    O = obstype(P)
     LB = typeof(solver.lbound)
     UB = typeof(solver.ubound)
     @req actions(::P)
     @req n_actions(::P)
     @req generate_sr(::P, ::S, ::A, ::AbstractRNG)
     @req generate_o(::P, ::S, ::A, ::S, ::AbstractRNG)
-    @req initial_state(::P, ::AbstractRNG)
+    @req initialstate(::P, ::AbstractRNG)
     @req lower_bound(::LB, ::P, ::S)
     @req upper_bound(::UB, ::P, ::S)
     @req init_lower_action(::P)

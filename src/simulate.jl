@@ -11,7 +11,7 @@ function simulate(sim::MCVISimulator, pomdp::POMDPs.POMDP, policy::MCVIPolicy, u
     if init_state != nothing
         s = init_state
     else
-        s = initial_state(pomdp, sim.rng)
+        s = initialstate(pomdp, sim.rng)
     end
     for i in 1:sim.times
         n = copy(initial_node)
@@ -47,7 +47,7 @@ function simulate(sim::MCVISimulator, pomdp::POMDPs.POMDP, policy::POMDPs.Policy
     if sim.init_state != nothing
         s = sim.init_state
     else
-        s = initial_state(pomdp, sim.rng)
+        s = initialstate(pomdp, sim.rng)
     end
     for i in 1:sim.times
         b = initial_belief

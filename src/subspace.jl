@@ -43,7 +43,7 @@ end
 Creates the next subspace for an action
 """
 function create_next(ss::MCVISubspace{S,A}, act::A, pomdp::POMDPs.POMDP, rng::AbstractRNG) where {S,A}
-    next_particles = Vector{S}(length(ss))
+    next_particles = Vector{S}(undef, length(ss))
     imm_rs = zeros(length(ss))
 
     for (i, s) in enumerate(ss.particles)

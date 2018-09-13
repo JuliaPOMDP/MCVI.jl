@@ -17,10 +17,10 @@ Is supposed to represent the initial state distribution.
 Not sure how to propagate num_particles without storing it in pomdp or calling it a different function?
 """
 function initial_belief(pomdp::POMDPs.POMDP{S,A,O}, num_particles::Int64, rng::AbstractRNG) where {S,A,O}
-    particles = Vector{S}(num_particles)
+    particles = Vector{S}(undef, num_particles)
     wts = zeros(num_particles)
     for i in 1:num_particles
-        particles[i] = initial_state(pomdp, rng) # Sample init state
+        particles[i] = initialstate(pomdp, rng) # Sample init state
         wts[i]= 1.0/float(num_particles)
     end
     ss = MCVISubspace{S,A}(particles, Vector{Reward}(), Dict{A, MCVISubspace{S,A}}())

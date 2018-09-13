@@ -20,7 +20,7 @@ end
 MCVIBeliefBackup(belief::MCVIBelief) = MCVIBeliefBackup(belief, Vector{MCVIActionBackup}(), 1, nothing, -Inf)
 
 function initialize_belief_backup!(bb::MCVIBeliefBackup, pomdp::POMDPs.POMDP{S}, num_state::Int64, rng::AbstractRNG) where {S}
-    for a in iterator(actions(pomdp))
+    for a in actions(pomdp)
         if a == init_lower_action(pomdp)
             continue
         end
@@ -35,7 +35,7 @@ end
 function prune_alpha_edges(alpha_edges, actback::MCVIActionBackup{S,A}, pomdp::POMDPs.POMDP, num_prune_obs::Int64, rng::AbstractRNG) where {S,A}
     ba = actback.ba
     sa = actback.sa
-    keep = Vector{Bool}(length(alpha_edges))
+    keep = Vector{Bool}(undef, length(alpha_edges))
     for i in 1:num_prune_obs
         # Sample observation from belief
         obs = generate_o(pomdp, nothing, nothing, rand(rng, ba), rng)
@@ -70,7 +70,7 @@ function compute_alpha_edges(nodes::Vector{MCVINode}, actback::MCVIActionBackup{
     ba = actback.ba
     sa = actback.sa
     scratch.X = zeros(size(scratch.X,1), length(sa))
-    alpha_edges = Vector{AlphaEdge}(length(nodes))
+    alpha_edges = Vector{AlphaEdge}(undef, length(nodes))
     # println("len_nodes: $(length(nodes))")
     #debug && tic()
     alpha_edges = pmap((n)->compute(sa, policy, sim, pomdp, n), nodes) # FIXME simple
@@ -158,7 +158,7 @@ function backup(bb::MCVIBeliefBackup, policy::MCVIPolicy, sim::MCVISimulator, po
 
     # Get new nodes from action backup
     t2 = @elapsed begin
-        new_nodes = Vector{MCVINode}(length(bb.act_backupers))
+        new_nodes = Vector{MCVINode}(undef, length(bb.act_backupers))
         for (i, actback) in enumerate(bb.act_backupers)
             new_nodes[i] = backup(actback, policy, sim, pomdp, nodes, num_prune_obs, scratch, debug=debug) # Backup action, FIXME Slowwww
         end

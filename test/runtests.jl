@@ -1,9 +1,10 @@
 using MCVI
-using Base.Test
+using Test
 import MCVI: init_lower_action, lower_bound, upper_bound
 using POMDPs
 using Random
-
+using POMDPModelTools
+using POMDPSimulators
 using POMDPModels # for LightDark1d
 
 # Bounds
