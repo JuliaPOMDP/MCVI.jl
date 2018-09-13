@@ -37,7 +37,7 @@ function simulate(sim::MCVISimulator, pomdp::POMDPs.POMDP, policy::MCVIPolicy, u
     sum_reward /= sim.times
 
     if isapprox(sum_reward, 0)
-        warn("Simulated reward close to 0")
+        @warn("Simulated reward close to 0")
     end
     return sum_reward
 end
@@ -71,7 +71,7 @@ function simulate(sim::MCVISimulator, pomdp::POMDPs.POMDP, policy::POMDPs.Policy
     sum_reward /= sim.times
 
     if isapprox(sum_reward, 0)
-        warn("Simulated reward close to 0")
+        @warn("Simulated reward close to 0")
     end
     return sum_reward
 end

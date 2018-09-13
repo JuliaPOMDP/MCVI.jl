@@ -45,7 +45,7 @@ function initialize_belief(up::MCVIUpdater, b::Any)
         else
             is = "<initial_state_distribution(::$(typeof(up.problem))) not implemented>"
         end
-        warn("""
+        @warn("""
              The belief used to start MCVI policy execution was (potentially) different from the initial belief used in the MCVI solution.
 
              updater root belief: $(up.root_belief)
@@ -58,7 +58,7 @@ end
 
 
 
-function create_node{A}(ps::MCVIUpdater, a::A, states::Any, alpha_edges::Vector{AlphaEdge})
+function create_node(ps::MCVIUpdater, a::A, states::Any, alpha_edges::Vector{AlphaEdge}) where {A}
     if states == nothing
         st_hash = Base.hash(states)
     else
@@ -72,7 +72,7 @@ end
 
 mutable struct MCVIPolicy <: POMDPs.Policy
     problem::POMDPs.POMDP
-    updater::Union{Void, POMDPs.Updater}
+    updater::Union{Nothing, POMDPs.Updater}
     MCVIPolicy() = new()
     MCVIPolicy(p) = new(p, nothing)
     MCVIPolicy(p, up) = new(p, up)
@@ -118,7 +118,7 @@ end
 """
 Move to the next policy state given observation
 """
-function update{A,O}(ps::MCVIUpdater, n::MCVINode, act::A, obs::O, np::MCVINode=create_belief(ps))
+function update(ps::MCVIUpdater, n::MCVINode, act::A, obs::O, np::MCVINode=create_belief(ps)) where {A,O}
     @assert hasnext(n) "No next policy state exists"
 
     local nid::UInt64

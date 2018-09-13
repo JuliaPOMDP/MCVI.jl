@@ -3,7 +3,10 @@ module MCVI
 using JSON
 using POMDPs
 using ParticleFilters
-
+using Random
+using Printf
+using Distributed
+import Statistics
 import POMDPs: solve, action, rand, simulate, updater, initialize_belief, update
 
 const Reward = Float64

@@ -5,7 +5,7 @@ function evaluate(policy::POMDPs.Policy, sim::POMDPs.Simulator, pomdp::POMDPs.PO
     N = 5000                    # TODO: pompd/solver config
     n = policy.updater.root
     v = 0.0
-    v = @parallel (+) for i in 1:N
+    v = @distributed (+) for i in 1:N
         simulate(sim, pomdp, policy, policy.updater, n)
     end
     v /= N
@@ -15,7 +15,7 @@ end
 """
 Evaluate a batch of states
 """
-function evaluate{S}(sts::Vector{S}, policy::POMDPs.Policy, sim::POMDPs.Simulator, pomdp::POMDPs.POMDP, n::MCVINode)
+function evaluate(sts::Vector{S}, policy::POMDPs.Policy, sim::POMDPs.Simulator, pomdp::POMDPs.POMDP, n::MCVINode) where {S}
     # vs = pmap((s)->simulate(sim, pomdp, policy, policy.updater, n, s), sts)
     vs = zeros(Float64, length(sts))
     for (i,s) in enumerate(sts)
@@ -29,7 +29,7 @@ Evaluate belief
 """
 function evaluate(b::MCVIBelief, policy::POMDPs.Policy, sim::MCVISimulator, pomdp::POMDPs.POMDP, n::MCVINode, num_eval_belief::Int64)
     val::Float64 = 0.0
-    val = @parallel (+) for i in 1:num_eval_belief
+    val = @distributed (+) for i in 1:num_eval_belief
         s = rand(sim.rng, b)    # This is the initial state stuff :/
         # sim.init_state = s      # TODO maybe roll this into simulate as well?
         simulate(sim, pomdp, policy, policy.updater, n, s)
@@ -41,13 +41,13 @@ end
 """
 Alpha vectors
 """
-function compute{S,A,O}(sts::Vector{S}, policy::POMDPs.Policy, sim::POMDPs.Simulator, pomdp::POMDPs.POMDP{S,A,O}, n::MCVINode)
+function compute(sts::Vector{S}, policy::POMDPs.Policy, sim::POMDPs.Simulator, pomdp::POMDPs.POMDP{S,A,O}, n::MCVINode) where {S,A,O}
     a = evaluate(sts, policy, sim, pomdp, n)
     edge = AlphaEdge(a, n.id)
     return edge
 end
 
-function _fill_obs!{S,A,O}(obs::Vector{O}, sim::POMDPs.Simulator, pomdp::POMDPs.POMDP{S,A,O}, ba::MCVIBelief)
+function _fill_obs!(obs::Vector{O}, sim::POMDPs.Simulator, pomdp::POMDPs.POMDP{S,A,O}, ba::MCVIBelief) where {S,A,O}
     for i in 1:length(obs)
         # sample observation from belief
         s = rand(sim.rng, ba)
@@ -55,9 +55,9 @@ function _fill_obs!{S,A,O}(obs::Vector{O}, sim::POMDPs.Simulator, pomdp::POMDPs.
     end
 end
 
-function _fill_ov!{O}(ov::Vector{Float64}, osum::Vector{Float64}, obs::Vector{O},
-                      policy::POMDPs.Policy, sim::POMDPs.Simulator, pomdp::POMDPs.POMDP,
-                      n::MCVINode, ba::MCVIBelief, num_states::Int64)
+function _fill_ov!(ov::Vector{Float64}, osum::Vector{Float64}, obs::Vector{O},
+                   policy::POMDPs.Policy, sim::POMDPs.Simulator, pomdp::POMDPs.POMDP,
+                   n::MCVINode, ba::MCVIBelief, num_states::Int64) where {O}
     sts = [rand(sim.rng, ba) for _ in 1:num_states]
     v = evaluate(sts, policy, sim, pomdp, n)
     for i in 1:num_states
@@ -73,7 +73,7 @@ function _fill_ov!{O}(ov::Vector{Float64}, osum::Vector{Float64}, obs::Vector{O}
     end
 end
 
-function _fill_X!{O,S}(X::Array{Float64,2}, obs::Vector{O}, sts::Vector{S})
+function _fill_X!(X::Array{Float64,2}, obs::Vector{O}, sts::Vector{S}) where {O,S}
     for (j,s) in enumerate(sts)
         for (i,o) in enumerate(obs)
             X[i,j] = pdf(s, o)
@@ -91,7 +91,7 @@ end
 """
 Least square computation
 """
-function compute{S,A,O}(sts::Vector{S}, policy::POMDPs.Policy, sim::POMDPs.Simulator, pomdp::POMDPs.POMDP{S,A,O}, n::MCVINode, ba::MCVIBelief, scratch::Scratch)
+function compute(sts::Vector{S}, policy::POMDPs.Policy, sim::POMDPs.Simulator, pomdp::POMDPs.POMDP{S,A,O}, n::MCVINode, ba::MCVIBelief, scratch::Scratch) where {S,A,O}
     _fill_obs!(scratch.obs, sim, pomdp, ba)
     _fill_ov!(scratch.ov, scratch.osum, scratch.obs, policy, sim, pomdp, n, ba, size(scratch.X,2))
     _fill_X!(scratch.X, scratch.obs, sts)
