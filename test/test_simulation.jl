@@ -10,8 +10,8 @@ function test_simulation()
     hist = simulate(sim, prob, policy)
     println("Simulation ran for $(n_steps(hist)) steps.")
     io = IOBuffer()
-    showerror(io, get(hist.exception))
-    println("Was terminated because of: $(takebuf_string(io))")
+    showerror(io, hist.exception)
+    println("Was terminated because of: $(String(take!(io)))")
     println("Reward:", discounted_reward(hist))
     return true
 end

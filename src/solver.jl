@@ -13,15 +13,15 @@ mutable struct BeliefNode{O} <: TreeNode
     children::Vector{TreeNode}
 end
 
-mutable struct ActionNode{A} <: TreeNode
+mutable struct ActionNode{O,A} <: TreeNode
     act::A
     belief:: MCVIBelief
     upper::Reward
     imm_reward::Reward
-    children::Vector{BeliefNode}
+    children::Vector{BeliefNode{O}}
 end
 
-BeliefNode(obs::Union{O, Nothing}, b::MCVIBelief, u::Reward, l::Reward, bn::Union{MCVINode, Nothing}, c::Vector{ActionNode{A}}) where {O,A} = BeliefNode(obs, b, u, l, bn, c)
+#BeliefNode{O}(obs::Union{O, Nothing}, b::MCVIBelief, u::Reward, l::Reward, bn::Union{MCVINode, Nothing}, c::Vector{ActionNode{O,A}}) where {O,A} = BeliefNode(obs, b, u, l, bn, c)
 
 """
 
@@ -72,7 +72,7 @@ create_policy(::MCVISolver, p::POMDPs.POMDP) = MCVIPolicy(p)
 """
 Expand beliefs (Add new action nodes)
 """
-function expand!(bn::BeliefNode, solver::MCVISolver, pomdp::POMDPs.POMDP; debug=false)
+function expand!(bn::BeliefNode{O}, solver::MCVISolver, pomdp::POMDPs.POMDP; debug=false) where {O}
     if !isempty(bn.children)
         return nothing
     end
@@ -89,7 +89,7 @@ function expand!(bn::BeliefNode, solver::MCVISolver, pomdp::POMDPs.POMDP; debug=
         end
         debug && print_with_color(:yellow, "expand")
         debug && println(" (belief) -> $(a) \t $(imm_r) \t $(upper)")
-        act_node = ActionNode(a, bel, upper, imm_r, Vector{BeliefNode}())
+        act_node = ActionNode(a, bel, upper, imm_r, Vector{BeliefNode{O}}())
         push!(bn.children, act_node)
     end
     @assert length(bn.children) == n_actions(pomdp)
@@ -98,7 +98,7 @@ end
 """
 Expand actions (Add new belief nodes)
 """
-function expand!(an::ActionNode{A}, solver::MCVISolver, pomdp::POMDPs.POMDP; debug=false) where {A}
+function expand!(an::ActionNode{O,A}, solver::MCVISolver, pomdp::POMDPs.POMDP; debug=false) where {O,A}
     if !isempty(an.children)
         return nothing
     end
@@ -111,7 +111,7 @@ function expand!(an::ActionNode{A}, solver::MCVISolver, pomdp::POMDPs.POMDP; deb
         upper = upper_bound(solver.ubound, pomdp, bel)
         lower = lower_bound(solver.lbound, pomdp, bel)
 
-        belief_node = BeliefNode(obs, bel, upper, lower, nothing, Vector{ActionNode{A}}())
+        belief_node = BeliefNode{O}(obs, bel, upper, lower, nothing, Vector{ActionNode{O,A}}())
         push!(an.children, belief_node)
     end
 end
@@ -119,7 +119,7 @@ end
 """
 Backup over belief
 """
-function backup!(bn::BeliefNode, solver::MCVISolver, policy::MCVIPolicy, pomdp::POMDPs.POMDP; debug=false)
+function backup!(bn::BeliefNode{O}, solver::MCVISolver, policy::MCVIPolicy, pomdp::POMDPs.POMDP; debug=false) where {O}
     # Upper value
     u = -Inf
     for a in bn.children
@@ -133,7 +133,7 @@ function backup!(bn::BeliefNode, solver::MCVISolver, policy::MCVIPolicy, pomdp::
 
     # Increase lower value
     policy_node, node_val = backup(bn.belief, policy, solver.simulator, pomdp, solver.num_state,
-                                   solver.num_prune_obs, solver.num_eval_belief, get(solver.scratch), debug=debug) # Backup belief
+                                   solver.num_prune_obs, solver.num_eval_belief, solver.scratch, debug=debug) # Backup belief
     debug && print_with_color(:magenta, "backup")
     debug && println(" (belief) -> $(node_val) \t $(bn.lower)")
     if node_val > bn.lower
@@ -146,7 +146,7 @@ end
 """
 Backup over action
 """
-function backup!(an::ActionNode, solver::MCVISolver, pomdp::POMDPs.POMDP)
+function backup!(an::ActionNode{O,A}, solver::MCVISolver, pomdp::POMDPs.POMDP) where {O,A}
     u::Float64 = 0.0
     for b in an.children
         u += b.upper
@@ -161,7 +161,7 @@ end
 """
 Search over belief
 """
-function search!(bn::BeliefNode, solver::MCVISolver, policy::MCVIPolicy, pomdp::POMDPs.POMDP{S,A,O}, target_gap::Float64; debug=false) where {S,A,O}
+function search!(bn::BeliefNode{O}, solver::MCVISolver, policy::MCVIPolicy, pomdp::POMDPs.POMDP{S,A,O}, target_gap::Float64; debug=false) where {S,A,O}
     debug && println("belief -> $(bn.obs) \t $(bn.upper) \t $(bn.lower)")
     if (bn.upper - bn.lower) > target_gap
         # Add child action nodes to belief node
@@ -190,7 +190,7 @@ end
 """
 Search over action
 """
-function search!(an::ActionNode, solver::MCVISolver, policy::MCVIPolicy, pomdp::POMDPs.POMDP, target_gap::Float64; debug=false)
+function search!(an::ActionNode{O,A}, solver::MCVISolver, policy::MCVIPolicy, pomdp::POMDPs.POMDP, target_gap::Float64; debug=false) where {O,A}
     debug && println("act -> $(an.act) \t $(an.upper)")
     if isterminal(pomdp, an.act) # FIXME Original MCVI searches until maxtime :( I could do that.
         return nothing
@@ -244,7 +244,7 @@ function solve(solver::MCVISolver, pomdp::POMDPs.POMDP{S,A,O}, policy::MCVIPolic
             end
         end
         debug && print_with_color(:green, "iter $(i) \t")
-        debug && println("upper: $(get(solver.root).upper) \t lower: $(get(solver.root).lower) \t time: $(t)")
+        debug && println("upper: $(solver.root.upper) \t lower: $(solver.root.lower) \t time: $(t)")
     end
 
     if @implemented initialstate_distribution(::typeof(pomdp))
