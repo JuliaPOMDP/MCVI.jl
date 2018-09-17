@@ -87,7 +87,7 @@ function expand!(bn::BeliefNode{O}, solver::MCVISolver, pomdp::POMDPs.POMDP; deb
         # Initialize using problem upper value
             upper = upper_bound(solver.ubound, pomdp, bel)
         end
-        debug && print_with_color(:yellow, "expand")
+        debug && printstyled("expand", color=:yellow)
         debug && println(" (belief) -> $(a) \t $(imm_r) \t $(upper)")
         act_node = ActionNode(a, bel, upper, imm_r, Vector{BeliefNode{O}}())
         push!(bn.children, act_node)
@@ -134,7 +134,7 @@ function backup!(bn::BeliefNode{O}, solver::MCVISolver, policy::MCVIPolicy, pomd
     # Increase lower value
     policy_node, node_val = backup(bn.belief, policy, solver.simulator, pomdp, solver.num_state,
                                    solver.num_prune_obs, solver.num_eval_belief, solver.scratch, debug=debug) # Backup belief
-    debug && print_with_color(:magenta, "backup")
+    debug && printstyled("backup", color=:magenta)
     debug && println(" (belief) -> $(node_val) \t $(bn.lower)")
     if node_val > bn.lower
         bn.lower = node_val
@@ -243,7 +243,7 @@ function solve(solver::MCVISolver, pomdp::POMDPs.POMDP{S,A,O}, policy::MCVIPolic
                 break
             end
         end
-        debug && print_with_color(:green, "iter $(i) \t")
+        debug && printstyled("iter $(i) \t", color=:green)
         debug && println("upper: $(solver.root.upper) \t lower: $(solver.root.lower) \t time: $(t)")
     end
 

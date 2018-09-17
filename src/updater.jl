@@ -153,7 +153,7 @@ function backup(bb::MCVIBeliefBackup, policy::MCVIPolicy, sim::MCVISimulator, po
     t1 = @elapsed begin
         update!(bb, nodes, pomdp, policy, sim, -0.1, num_eval_belief) # Try ϵ less
     end
-    debug && print_with_color(:cyan, "update")
+    debug && printstyled("update", color=:cyan)
     debug && println(" (nodes): $(t1)s")
 
     # Get new nodes from action backup
@@ -163,7 +163,7 @@ function backup(bb::MCVIBeliefBackup, policy::MCVIPolicy, sim::MCVISimulator, po
             new_nodes[i] = backup(actback, policy, sim, pomdp, nodes, num_prune_obs, scratch, debug=debug) # Backup action, FIXME Slowwww
         end
     end
-    debug && print_with_color(:cyan, "backup action")
+    debug && printstyled("backup action", color=:cyan)
     debug && println(" (nodes): $(t2)s")
 
     bb.last_index += length(nodes)
