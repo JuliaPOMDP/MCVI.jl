@@ -13,7 +13,9 @@ Bai, H., Hsu, D., & Lee, W. S. (2014). Integrated perception and planning in the
 
 ```julia
 using POMDPs
-POMDPs.add("MCVI")
+POMDPs.add_registry()
+import Pkg
+Pkg.add("MCVI")
 ```
 
 ## Documentation
