@@ -19,8 +19,8 @@ end
 
 MCVIBeliefBackup(belief::MCVIBelief) = MCVIBeliefBackup(belief, Vector{MCVIActionBackup}(), 1, nothing, -Inf)
 
-function initialize_belief_backup!{S}(bb::MCVIBeliefBackup, pomdp::POMDPs.POMDP{S}, num_state::Int64, rng::AbstractRNG)
-    for a in iterator(actions(pomdp))
+function initialize_belief_backup!(bb::MCVIBeliefBackup, pomdp::POMDPs.POMDP{S}, num_state::Int64, rng::AbstractRNG) where {S}
+    for a in actions(pomdp)
         if a == init_lower_action(pomdp)
             continue
         end
@@ -32,10 +32,10 @@ function initialize_belief_backup!{S}(bb::MCVIBeliefBackup, pomdp::POMDPs.POMDP{
     return bb
 end
 
-function prune_alpha_edges{S,A}(alpha_edges, actback::MCVIActionBackup{S,A}, pomdp::POMDPs.POMDP, num_prune_obs::Int64, rng::AbstractRNG)
+function prune_alpha_edges(alpha_edges, actback::MCVIActionBackup{S,A}, pomdp::POMDPs.POMDP, num_prune_obs::Int64, rng::AbstractRNG) where {S,A}
     ba = actback.ba
     sa = actback.sa
-    keep = Vector{Bool}(length(alpha_edges))
+    keep = Vector{Bool}(undef, length(alpha_edges))
     for i in 1:num_prune_obs
         # Sample observation from belief
         obs = generate_o(pomdp, nothing, nothing, rand(rng, ba), rng)
@@ -66,13 +66,13 @@ end
 """
 Calls the least square compute function
 """
-function compute_alpha_edges{S,A}(nodes::Vector{MCVINode}, actback::MCVIActionBackup{S,A}, policy::MCVIPolicy, sim::MCVISimulator, pomdp::POMDPs.POMDP, scratch::Scratch; debug=false)
+function compute_alpha_edges(nodes::Vector{MCVINode}, actback::MCVIActionBackup{S,A}, policy::MCVIPolicy, sim::MCVISimulator, pomdp::POMDPs.POMDP, scratch::Scratch; debug=false) where {S,A}
     ba = actback.ba
     sa = actback.sa
     scratch.X = zeros(size(scratch.X,1), length(sa))
-    alpha_edges = Vector{AlphaEdge}(length(nodes))
+    alpha_edges = Vector{AlphaEdge}(undef, length(nodes))
     # println("len_nodes: $(length(nodes))")
-    debug && tic()
+    #debug && tic()
     alpha_edges = pmap((n)->compute(sa, policy, sim, pomdp, n), nodes) # FIXME simple
     # for (i,n) in enumerate(nodes)
     #     alpha_edges[i] = compute(sa, policy, sim, pomdp, n)
@@ -83,11 +83,11 @@ function compute_alpha_edges{S,A}(nodes::Vector{MCVINode}, actback::MCVIActionBa
     #     n = nodes[i]
     #     alpha_edges[i] = compute(sa, policy, sim, pomdp, n, ba, scratch) # FIXME Slowwww
     # end
-    debug && toc()
+    #debug && toc()
     return alpha_edges
 end
 
-function add_alpha_edges!{S,A}(actback::MCVIActionBackup{S,A}, edges, updater::MCVIUpdater, pomdp::POMDPs.POMDP, num_prune_obs::Int64, rng::AbstractRNG)
+function add_alpha_edges!(actback::MCVIActionBackup{S,A}, edges, updater::MCVIUpdater, pomdp::POMDPs.POMDP, num_prune_obs::Int64, rng::AbstractRNG) where {S,A}
     new_alpha_edges = deepcopy(actback.alpha_edges)
     append!(new_alpha_edges, edges)
     # Prune
@@ -108,7 +108,7 @@ end
 """
 Backup action
 """
-function backup{S,A}(actback::MCVIActionBackup{S,A}, policy::MCVIPolicy, sim::MCVISimulator, pomdp::POMDPs.POMDP, nodes, num_prune_obs::Int64, scratch::Scratch; debug=false)
+function backup(actback::MCVIActionBackup{S,A}, policy::MCVIPolicy, sim::MCVISimulator, pomdp::POMDPs.POMDP, nodes, num_prune_obs::Int64, scratch::Scratch; debug=false) where {S,A}
     # Compute alpha edges
     new_alpha_edges = compute_alpha_edges(nodes, actback, policy, sim, pomdp, scratch, debug=debug)
     # Add alpha edges
@@ -150,19 +150,21 @@ function backup(bb::MCVIBeliefBackup, policy::MCVIPolicy, sim::MCVISimulator, po
     # Get newer nodes
     nodes = policy.updater.nodes_queue[bb.last_index:end]
     # Update best belief
-    tic()
-    update!(bb, nodes, pomdp, policy, sim, -0.1, num_eval_belief) # Try ϵ less
-    debug && print_with_color(:cyan, "update")
-    debug && println(" (nodes): $(toq())s")
+    t1 = @elapsed begin
+        update!(bb, nodes, pomdp, policy, sim, -0.1, num_eval_belief) # Try ϵ less
+    end
+    debug && printstyled("update", color=:cyan)
+    debug && println(" (nodes): $(t1)s")
 
     # Get new nodes from action backup
-    tic()
-    new_nodes = Vector{MCVINode}(length(bb.act_backupers))
-    for (i, actback) in enumerate(bb.act_backupers)
-        new_nodes[i] = backup(actback, policy, sim, pomdp, nodes, num_prune_obs, scratch, debug=debug) # Backup action, FIXME Slowwww
+    t2 = @elapsed begin
+        new_nodes = Vector{MCVINode}(undef, length(bb.act_backupers))
+        for (i, actback) in enumerate(bb.act_backupers)
+            new_nodes[i] = backup(actback, policy, sim, pomdp, nodes, num_prune_obs, scratch, debug=debug) # Backup action, FIXME Slowwww
+        end
     end
-    debug && print_with_color(:cyan, "backup action")
-    debug && println(" (nodes): $(toq())s")
+    debug && printstyled("backup action", color=:cyan)
+    debug && println(" (nodes): $(t2)s")
 
     bb.last_index += length(nodes)
     update!(bb, new_nodes, pomdp, policy, sim, +0.1, num_eval_belief) # Try ϵ more

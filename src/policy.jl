@@ -40,17 +40,17 @@ create_belief(ps::MCVIUpdater) = MCVINode()
 
 function initialize_belief(up::MCVIUpdater, b::Any)
     if up.root_belief != b
-        if @implemented initial_state_distribution(::typeof(up.problem))
-            is = initial_state_distribution(up.problem)
+        if @implemented initialstate_distribution(::typeof(up.problem))
+            is = initialstate_distribution(up.problem)
         else
-            is = "<initial_state_distribution(::$(typeof(up.problem))) not implemented>"
+            is = "<initialstate_distribution(::$(typeof(up.problem))) not implemented>"
         end
-        warn("""
+        @warn("""
              The belief used to start MCVI policy execution was (potentially) different from the initial belief used in the MCVI solution.
 
              updater root belief: $(up.root_belief)
              b0 for policy execution: $b
-             initial_state_distribution(pomdp): $is
+             initialstate_distribution(pomdp): $is
              """)
     end
     return up.root
@@ -58,7 +58,7 @@ end
 
 
 
-function create_node{A}(ps::MCVIUpdater, a::A, states::Any, alpha_edges::Vector{AlphaEdge})
+function create_node(ps::MCVIUpdater, a::A, states::Any, alpha_edges::Vector{AlphaEdge}) where {A}
     if states == nothing
         st_hash = Base.hash(states)
     else
@@ -72,7 +72,7 @@ end
 
 mutable struct MCVIPolicy <: POMDPs.Policy
     problem::POMDPs.POMDP
-    updater::Union{Void, POMDPs.Updater}
+    updater::Union{Nothing, POMDPs.Updater}
     MCVIPolicy() = new()
     MCVIPolicy(p) = new(p, nothing)
     MCVIPolicy(p, up) = new(p, up)
@@ -86,7 +86,7 @@ end
 
 function init_nodes(policy::MCVIPolicy, ps::MCVIUpdater)
     ns = Vector{MCVINode}()
-    for a in iterator(actions(policy.problem))
+    for a in actions(policy.problem)
         if isterminal(policy.problem, a) # FIXME: Can use init_lower_action instead?
             push!(ns, create_node(ps, a, nothing, Vector{AlphaEdge}()))
         end
@@ -118,7 +118,7 @@ end
 """
 Move to the next policy state given observation
 """
-function update{A,O}(ps::MCVIUpdater, n::MCVINode, act::A, obs::O, np::MCVINode=create_belief(ps))
+function update(ps::MCVIUpdater, n::MCVINode, act::A, obs::O, np::MCVINode=create_belief(ps)) where {A,O}
     @assert hasnext(n) "No next policy state exists"
 
     local nid::UInt64

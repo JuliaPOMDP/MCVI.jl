@@ -7,7 +7,7 @@ mutable struct MCVIBelief{S,A}
     id::UInt64
 end
 
-MCVIBelief{S,A}(space::MCVISubspace{S,A}...) = MCVIBelief{S,A}(space...)
+MCVIBelief(space::MCVISubspace{S,A}...) where {S,A} = MCVIBelief(space...)
 
 Base.length(b::MCVIBelief) = length(b.weights)
 
@@ -16,11 +16,11 @@ Create initial belief particles
 Is supposed to represent the initial state distribution.
 Not sure how to propagate num_particles without storing it in pomdp or calling it a different function?
 """
-function initial_belief{S,A,O}(pomdp::POMDPs.POMDP{S,A,O}, num_particles::Int64, rng::AbstractRNG)
-    particles = Vector{S}(num_particles)
+function initial_belief(pomdp::POMDPs.POMDP{S,A,O}, num_particles::Int64, rng::AbstractRNG) where {S,A,O}
+    particles = Vector{S}(undef, num_particles)
     wts = zeros(num_particles)
     for i in 1:num_particles
-        particles[i] = initial_state(pomdp, rng) # Sample init state
+        particles[i] = initialstate(pomdp, rng) # Sample init state
         wts[i]= 1.0/float(num_particles)
     end
     ss = MCVISubspace{S,A}(particles, Vector{Reward}(), Dict{A, MCVISubspace{S,A}}())
@@ -33,7 +33,7 @@ end
 Samples states from belief
 """
 function rand(rng::AbstractRNG, b::MCVIBelief)
-    r = Base.rand(rng)
+    r = Random.rand(rng)
     for (i, p) in enumerate(b.weights)
         r -= p
         if r < 0
@@ -49,7 +49,7 @@ end
 Get the next belief according to action.
 Actions create a new subspace
 """
-function next{S,A}(bb::MCVIBelief{S,A}, act::A, pomdp::POMDPs.POMDP, rng::AbstractRNG)
+function next(bb::MCVIBelief{S,A}, act::A, pomdp::POMDPs.POMDP, rng::AbstractRNG) where {S,A}
     next_ss = next(bb.space, act, pomdp, rng) # Get the next subspace
     return MCVIBelief(next_ss, bb.weights, UInt64(0)) # FIXME update id?
 end
@@ -60,7 +60,7 @@ end
 Get the next belief according to observation.
 Observations update the weights of the space created by actions.
 """
-function next{S,O}(bb::MCVIBelief{S}, obs::O, pomdp::POMDPs.POMDP)
+function next(bb::MCVIBelief{S}, obs::O, pomdp::POMDPs.POMDP) where {S,O}
     wts = weights(bb.space, obs, pomdp) # Get weights for the observation
     belief_after_obs = bb.weights .* wts
     obs_norm = sum(belief_after_obs)
@@ -112,7 +112,7 @@ end
 """
 Returns the mean value of the particle belief
 """
-function mean(b::MCVIBelief)
+function Statistics.mean(b::MCVIBelief)
     μ = 0.0
     for i in 1:length(b.weights)
         μ += b.weights[i] * particle(b.space, i)
@@ -123,7 +123,7 @@ end
 """
 Returns the standard deviation of the particle belief
 """
-function std(b::MCVIBelief, μ::Float64=mean(b))
+function Statistics.std(b::MCVIBelief, μ::Float64=mean(b))
     σ = 0.0
     for i in 1:length(b.weights)
         r = particle(b.space, i) - μ

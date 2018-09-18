@@ -9,7 +9,7 @@ end
 """
 MCVISubspace constructor
 """
-MCVISubspace{S,A}(p::Vector{S}, r, ns::Dict{A,MCVISubspace{S,A}}) = MCVISubspace{S,A}(p, r, ns)
+MCVISubspace(p::Vector{S}, r, ns::Dict{A,MCVISubspace{S,A}}) where {S,A} = MCVISubspace(p, r, ns)
 
 
 """
@@ -29,7 +29,7 @@ particle(ss::MCVISubspace, i::Int64) = ss.particles[i]
 
 Returns an observation's weight for each particle in the subspace
 """
-function weights{S,A,O}(ss::MCVISubspace{S,A}, obs::O, pomdp::POMDPs.POMDP)
+function weights(ss::MCVISubspace{S,A}, obs::O, pomdp::POMDPs.POMDP) where {S,A,O}
     wts = zeros(length(ss))
     for i in 1:length(wts)
         wts[i] = obs_weight(pomdp, particle(ss, i), obs)
@@ -42,8 +42,8 @@ end
 
 Creates the next subspace for an action
 """
-function create_next{S,A}(ss::MCVISubspace{S,A}, act::A, pomdp::POMDPs.POMDP, rng::AbstractRNG)
-    next_particles = Vector{S}(length(ss))
+function create_next(ss::MCVISubspace{S,A}, act::A, pomdp::POMDPs.POMDP, rng::AbstractRNG) where {S,A}
+    next_particles = Vector{S}(undef, length(ss))
     imm_rs = zeros(length(ss))
 
     for (i, s) in enumerate(ss.particles)
@@ -57,7 +57,7 @@ end
 
 Returns the next subspace according to the action. If it does not exist, creates one.
 """
-function next{S,A}(ss::MCVISubspace{S,A}, act::A, pomdp::POMDPs.POMDP, rng::AbstractRNG)
+function next(ss::MCVISubspace{S,A}, act::A, pomdp::POMDPs.POMDP, rng::AbstractRNG) where {S,A}
     local next_ss::MCVISubspace{S,A}
     if haskey(ss.next_state, act)
         next_ss = ss.next_state[act]
