@@ -106,7 +106,7 @@ function expand!(an::ActionNode{O,A}, solver::MCVISolver, pomdp::POMDPs.POMDP; d
     for i in 1:solver.obs_branch # branching factor
         # Sample observation
         s = rand(solver.simulator.rng, an.belief)
-        obs = gen(DDNNode(:o), pomdp, nothing, nothing, s, solver.simulator.rng)
+        obs = gen(DDNNode(:o), pomdp, s, solver.simulator.rng)
         bel = next(an.belief, obs, pomdp) # Next belief by observation
 
         upper = upper_bound(solver.ubound, pomdp, bel)

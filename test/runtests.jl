@@ -7,6 +7,9 @@ using POMDPModelTools
 using POMDPSimulators
 using POMDPModels # for LightDark1d
 
+# to get tests to pass on POMDPs 0.7.3 - can be removed once support is dropped for 0.7.3
+POMDPs.generate_o(m::LightDark1D, sp, rng::AbstractRNG) = rand(rng, observation(m, sp))
+
 # Bounds
 mutable struct LightDark1DLowerBound
     rng::AbstractRNG
@@ -17,7 +20,7 @@ mutable struct LightDark1DUpperBound
 end
 
 function lower_bound(lb::LightDark1DLowerBound, p::LightDark1D, s::LightDark1DState)
-    r = gen(DDNOut(:r), p, s, init_lower_action(p), lb.rng)
+    _, _, r = gen(DDNOut{(:sp,:o,:r)}(), p, s, init_lower_action(p), lb.rng)
     return r * discount(p)
 end
 
