@@ -77,7 +77,8 @@ function expand!(bn::BeliefNode{O}, solver::MCVISolver, pomdp::POMDPs.POMDP; deb
         return nothing
     end
 
-    for a in actions(pomdp)
+    as = actions(pomdp)
+    for a in as
         bel = next(bn.belief, a, pomdp, solver.simulator.rng) # Next belief by action
         imm_r = reward(bel, pomdp)
         local upper::Float64
@@ -92,7 +93,7 @@ function expand!(bn::BeliefNode{O}, solver::MCVISolver, pomdp::POMDPs.POMDP; deb
         act_node = ActionNode(a, bel, upper, imm_r, Vector{BeliefNode{O}}())
         push!(bn.children, act_node)
     end
-    @assert length(bn.children) == n_actions(pomdp)
+    @assert length(bn.children) == length(as)
 end
 
 """
@@ -105,7 +106,7 @@ function expand!(an::ActionNode{O,A}, solver::MCVISolver, pomdp::POMDPs.POMDP; d
     for i in 1:solver.obs_branch # branching factor
         # Sample observation
         s = rand(solver.simulator.rng, an.belief)
-        obs = generate_o(pomdp, nothing, nothing, s, solver.simulator.rng)
+        obs = gen(DDNNode(:o), pomdp, s, solver.simulator.rng)
         bel = next(an.belief, obs, pomdp) # Next belief by observation
 
         upper = upper_bound(solver.ubound, pomdp, bel)
@@ -265,7 +266,8 @@ end
     LB = typeof(solver.lbound)
     UB = typeof(solver.ubound)
     @req actions(::P)
-    @req n_actions(::P)
+    as = actions(pomdp)
+    @req length(::typeof(as))
     @req generate_sr(::P, ::S, ::A, ::AbstractRNG)
     @req generate_o(::P, ::S, ::A, ::S, ::AbstractRNG)
     @req initialstate(::P, ::AbstractRNG)

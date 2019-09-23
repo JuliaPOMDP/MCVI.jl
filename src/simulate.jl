@@ -19,7 +19,7 @@ function simulate(sim::MCVISimulator, pomdp::POMDPs.POMDP, policy::MCVIPolicy, u
         sumr::Reward = 0
         while true
             a = action(policy, n)
-            sprime, obs, r = generate_sor(pomdp, s, a, sim.rng)
+            sprime, obs, r = gen(DDNOut(:sp,:o,:r), pomdp, s, a, sim.rng)
             o = @sprintf("%0.6f", obs)
             rtxt = @sprintf("%0.3f", r)
             sim.display && println("s: $s \t a: $a \t sp: $sprime \t o: $o \t r: $rtxt \t nid: $(n.id)")
@@ -58,11 +58,10 @@ function simulate(sim::MCVISimulator, pomdp::POMDPs.POMDP, policy::POMDPs.Policy
             if isterminal(pomdp, a)
                 break
             end
-            sprime, r = generate_sr(pomdp, s, a, sim.rng)
+            sprime, obs, r = gen(DDNOut(:sp,:o,:r), pomdp, s, a, sim.rng)
             disc *= discount(pomdp)
             sumr += r*disc
             s = sprime
-            obs = generate_o(pomdp, nothing, nothing, s, sim.rng)
             b = next(b, a, pomdp, sim.rng)
             b = next(b, obs, pomdp)
         end
