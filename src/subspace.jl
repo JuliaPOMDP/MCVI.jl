@@ -47,7 +47,7 @@ function create_next(ss::MCVISubspace{S,A}, act::A, pomdp::POMDPs.POMDP, rng::Ab
     imm_rs = zeros(length(ss))
 
     for (i, s) in enumerate(ss.particles)
-        (next_particles[i], _, imm_rs[i]) = generate_sor(pomdp, s, act, rng)
+        (next_particles[i], imm_rs[i]) = gen(DDNOut(:sp,:r), pomdp, s, act, rng)
     end
     return MCVISubspace(next_particles, imm_rs, Dict{A, MCVISubspace{S,A}}())
 end

@@ -17,7 +17,7 @@ mutable struct LightDark1DUpperBound
 end
 
 function lower_bound(lb::LightDark1DLowerBound, p::LightDark1D, s::LightDark1DState)
-    _, _, r = generate_sor(p, s, init_lower_action(p), lb.rng)
+    r = gen(DDNOut(:r), p, s, init_lower_action(p), lb.rng)
     return r * discount(p)
 end
 
