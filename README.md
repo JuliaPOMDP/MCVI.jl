@@ -7,7 +7,7 @@ The Monte Carlo Value Iteration (MCVI) offline solver for `POMDPs.jl`.
 
 Described in
 
-Bai, H., Hsu, D., & Lee, W. S. (2014). Integrated perception and planning in the continuous space: A POMDP approach. *The International Journal of Robotics Research*, 33(9), 1288-1302.
+Bai, H., Hsu, D., Lee, W. S., & Ngo, V. A. (2010). Monte Carlo value iteration for continuous-state POMDPs. In Algorithmic foundations of robotics IX (pp. 175-191). Springer, Berlin, Heidelberg.
 
 ## Installation
 
