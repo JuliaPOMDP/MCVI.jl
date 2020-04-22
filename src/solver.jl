@@ -21,8 +21,6 @@ mutable struct ActionNode{O,A} <: TreeNode
     children::Vector{BeliefNode{O}}
 end
 
-#BeliefNode{O}(obs::Union{O, Nothing}, b::MCVIBelief, u::Reward, l::Reward, bn::Union{MCVINode, Nothing}, c::Vector{ActionNode{O,A}}) where {O,A} = BeliefNode(obs, b, u, l, bn, c)
-
 """
 
 Hyperparameters:
@@ -268,8 +266,8 @@ end
     @req actions(::P)
     as = actions(pomdp)
     @req length(::typeof(as))
-    @req generate_sr(::P, ::S, ::A, ::AbstractRNG)
-    @req generate_o(::P, ::S, ::A, ::S, ::AbstractRNG)
+    @req gen(::DDNOut{(:sp, :r)}, ::P, ::S, ::A, ::AbstractRNG)
+    @req gen(::DDNNode{:o}, ::P, ::S, ::A, ::S, ::AbstractRNG)
     @req initialstate(::P, ::AbstractRNG)
     @req lower_bound(::LB, ::P, ::S)
     @req upper_bound(::UB, ::P, ::S)

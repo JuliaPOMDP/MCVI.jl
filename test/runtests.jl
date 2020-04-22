@@ -8,7 +8,7 @@ using POMDPSimulators
 using POMDPModels # for LightDark1d
 
 # to get tests to pass on POMDPs 0.7.3 - can be removed once support is dropped for 0.7.3
-POMDPs.generate_o(m::LightDark1D, sp, rng::AbstractRNG) = rand(rng, observation(m, sp))
+# POMDPs.generate_o(m::LightDark1D, sp, rng::AbstractRNG) = rand(rng, observation(m, sp))
 
 # Bounds
 mutable struct LightDark1DLowerBound
