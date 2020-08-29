@@ -10,7 +10,7 @@ using LinearAlgebra
 import Statistics
 import POMDPs: solve, action, rand, simulate, updater, initialize_belief, update
 
-using POMDPLinter: @POMDP_require
+using POMDPLinter: @POMDP_require, @implemented
 
 # Currently the only method of ParticleFilters.obs_weight is obs_weight(m, s, a, sp, o)
 # Since MCVI uses obs_weight(m, a, sp, o) and obs_weight(m, sp, o), we define them here

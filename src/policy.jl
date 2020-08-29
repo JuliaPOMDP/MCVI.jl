@@ -40,17 +40,17 @@ create_belief(ps::MCVIUpdater) = MCVINode()
 
 function initialize_belief(up::MCVIUpdater, b::Any)
     if up.root_belief != b
-        if @implemented initialstate_distribution(::typeof(up.problem))
-            is = initialstate_distribution(up.problem)
+        if @implemented initialstate(::typeof(up.problem))
+            is = initialstate(up.problem)
         else
-            is = "<initialstate_distribution(::$(typeof(up.problem))) not implemented>"
+            is = "<initialstate(::$(typeof(up.problem))) not implemented>"
         end
         @warn("""
              The belief used to start MCVI policy execution was (potentially) different from the initial belief used in the MCVI solution.
 
              updater root belief: $(up.root_belief)
              b0 for policy execution: $b
-             initialstate_distribution(pomdp): $is
+             initialstate(pomdp): $is
              """)
     end
     return up.root

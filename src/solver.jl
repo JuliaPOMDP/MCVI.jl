@@ -246,8 +246,8 @@ function solve(solver::MCVISolver, pomdp::POMDPs.POMDP{S,A,O}, policy::MCVIPolic
         debug && println("upper: $(solver.root.upper) \t lower: $(solver.root.lower) \t time: $(t)")
     end
 
-    if @implemented initialstate_distribution(::typeof(pomdp))
-        policy.updater.root_belief = initialstate_distribution(pomdp)
+    if @implemented initialstate(::typeof(pomdp))
+        policy.updater.root_belief = initialstate(pomdp)
     else
         policy.updater.root_belief = nothing
     end
