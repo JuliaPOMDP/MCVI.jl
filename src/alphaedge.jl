@@ -51,7 +51,7 @@ function _fill_obs!(obs::Vector{O}, sim::POMDPs.Simulator, pomdp::POMDPs.POMDP{S
     for i in 1:length(obs)
         # sample observation from belief
         s = rand(sim.rng, ba)
-        obs[i] = gen(DDNNode(:o), pomdp, s, sim.rng)
+        obs[i] = rand(sim.rng, observation(pomdp, s))
     end
 end
 

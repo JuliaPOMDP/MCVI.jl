@@ -127,8 +127,8 @@ function update(ps::MCVIUpdater, n::MCVINode, act::A, obs::O, np::MCVINode=creat
     else
         @assert n.states != nothing "No states in the current node"
         obs_wt = zeros(length(n.states))
-        for (i,s) in enumerate(n.states)
-            obs_wt[i] = obs_weight(ps.problem, act, s, obs)
+        for (i,sp) in enumerate(n.states)
+            obs_wt[i] = obs_weight(ps.problem, act, sp, obs)
         end
         maxv = -Inf
         for ae in n.alpha_edges

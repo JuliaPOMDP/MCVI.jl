@@ -104,7 +104,7 @@ function expand!(an::ActionNode{O,A}, solver::MCVISolver, pomdp::POMDPs.POMDP; d
     for i in 1:solver.obs_branch # branching factor
         # Sample observation
         s = rand(solver.simulator.rng, an.belief)
-        obs = gen(DDNNode(:o), pomdp, s, solver.simulator.rng)
+        obs = rand(solver.simulator.rng, observation(pomdp, s))
         bel = next(an.belief, obs, pomdp) # Next belief by observation
 
         upper = upper_bound(solver.ubound, pomdp, bel)
@@ -266,9 +266,9 @@ end
     @req actions(::P)
     as = actions(pomdp)
     @req length(::typeof(as))
-    @req gen(::DDNOut{(:sp, :r)}, ::P, ::S, ::A, ::AbstractRNG)
-    @req gen(::DDNNode{:o}, ::P, ::S, ::A, ::S, ::AbstractRNG)
-    @req initialstate(::P, ::AbstractRNG)
+    @req gen(::P, ::S, ::A, ::AbstractRNG)
+    @req observation(::P, ::S, ::A, ::S)
+    @req initialstate(::P)
     @req lower_bound(::LB, ::P, ::S)
     @req upper_bound(::UB, ::P, ::S)
     @req init_lower_action(::P)

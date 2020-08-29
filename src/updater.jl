@@ -38,7 +38,7 @@ function prune_alpha_edges(alpha_edges, actback::MCVIActionBackup{S,A}, pomdp::P
     keep = Vector{Bool}(undef, length(alpha_edges))
     for i in 1:num_prune_obs
         # Sample observation from belief
-        obs = gen(DDNNode(:o), pomdp, rand(rng, ba), rng)
+        obs = rand(rng, observation(pomdp, rand(rng, ba)))
         obswt = zeros(length(sa))
         for (k,s) in enumerate(sa)
             obswt[k] = obs_weight(pomdp, s, obs)

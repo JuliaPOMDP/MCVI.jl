@@ -30,14 +30,12 @@ function test_dummy_graph()
     rng = MersenneTwister(42)
     p = LightDark1D()
     up = build_dummy_graph(p)
-    # s0 = initialstate(p)
-    # sim = MCVISimulator(MersenneTwister(420), 1)
     sim = MCVISimulator()
     policy = MCVIPolicy(p, up)
 
     sumv = 0.0
     for i in 1:1000
-        ss = initialstate(p, rng)
+        ss = rand(rng, initialstate(p))
         sumv += MCVI.simulate(sim, p, policy, up, up.root, ss)
     end
     sumv /= 1000
@@ -74,7 +72,7 @@ function test_dummy_graph2()
     dump_json(policy, joinpath(tempdir(), "test_policy.json"))
     sumv = 0.0
     for i in 1:1000
-        ss = initialstate(pomdp, rng)
+        ss = rand(rng, initialstate(pomdp))
         sumv += MCVI.simulate(sim, pomdp, policy, up, up.root, ss)
     end
     sumv /= 1000

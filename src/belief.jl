@@ -20,7 +20,7 @@ function initial_belief(pomdp::POMDPs.POMDP{S,A,O}, num_particles::Int64, rng::A
     particles = Vector{S}(undef, num_particles)
     wts = zeros(num_particles)
     for i in 1:num_particles
-        particles[i] = initialstate(pomdp, rng) # Sample init state
+        particles[i] = rand(rng, initialstate(pomdp))
         wts[i]= 1.0/float(num_particles)
     end
     ss = MCVISubspace{S,A}(particles, Vector{Reward}(), Dict{A, MCVISubspace{S,A}}())

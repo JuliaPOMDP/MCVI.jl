@@ -11,7 +11,7 @@ function simulate(sim::MCVISimulator, pomdp::POMDPs.POMDP, policy::MCVIPolicy, u
     if init_state != nothing
         s = init_state
     else
-        s = initialstate(pomdp, sim.rng)
+        s = rand(sim.rng, initialstate(pomdp))
     end
     for i in 1:sim.times
         n = copy(initial_node)
@@ -19,7 +19,7 @@ function simulate(sim::MCVISimulator, pomdp::POMDPs.POMDP, policy::MCVIPolicy, u
         sumr::Reward = 0
         while true
             a = action(policy, n)
-            sprime, obs, r = gen(DDNOut(:sp,:o,:r), pomdp, s, a, sim.rng)
+            sprime, obs, r = @gen(:sp,:o,:r)(pomdp, s, a, sim.rng)
             o = @sprintf("%0.6f", obs)
             rtxt = @sprintf("%0.3f", r)
             sim.display && println("s: $s \t a: $a \t sp: $sprime \t o: $o \t r: $rtxt \t nid: $(n.id)")
@@ -58,7 +58,7 @@ function simulate(sim::MCVISimulator, pomdp::POMDPs.POMDP, policy::POMDPs.Policy
             if isterminal(pomdp, a)
                 break
             end
-            sprime, obs, r = gen(DDNOut(:sp,:o,:r), pomdp, s, a, sim.rng)
+            sprime, obs, r = @gen(:sp,:o,:r)(pomdp, s, a, sim.rng)
             disc *= discount(pomdp)
             sumr += r*disc
             s = sprime
