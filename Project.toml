@@ -1,7 +1,7 @@
 name = "MCVI"
 uuid = "30d33687-f7ed-5b0d-8b26-3dc9b7abd572"
 repo = "https://github.com/JuliaPOMDP/MCVI.jl"
-version = "0.3.1"
+version = "0.3.2"
 
 [deps]
 Distributed = "8ba89e20-285c-5b6f-9357-94700520ee1b"
