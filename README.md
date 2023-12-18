@@ -1,7 +1,7 @@
 # MCVI
 
-[![Build Status](https://travis-ci.org/JuliaPOMDP/MCVI.jl.svg?branch=master)](https://travis-ci.org/JuliaPOMDP/MCVI.jl)
-[![Coverage Status](https://coveralls.io/repos/github/JuliaPOMDP/MCVI.jl/badge.svg?branch=master)](https://coveralls.io/github/JuliaPOMDP/MCVI.jl?branch=master)
+[![CI](https://github.com/JuliaPOMDP/MCVI.jl/actions/workflows/CI.yml/badge.svg)](https://github.com/JuliaPOMDP/MCVI.jl/actions/workflows/CI.yml)
+[![codecov.io](http://codecov.io/github/JuliaPOMDP/MCVI.jl/coverage.svg?branch=master)](http://codecov.io/github/JuliaPOMDP/MCVI.jl?branch=master)
 
 The Monte Carlo Value Iteration (MCVI) offline solver for `POMDPs.jl`.
 
