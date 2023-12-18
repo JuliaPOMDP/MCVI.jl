@@ -4,7 +4,14 @@ mutable struct MCVISimulator <: POMDPs.Simulator
     times::Integer
     display::Bool
 end
-MCVISimulator() = MCVISimulator(MersenneTwister(420), 1, false)
+MCVISimulater(rng::AbstractRNG) = MCVISimulator(rng, 1, false)
+function MCVISimulator(; 
+    rng::AbstractRNG=Random.GLOBAL_RNG,
+    times::Integer=1,
+    display::Bool=false
+)
+    return MCVISimulator(rng, times, display)
+end
 
 function simulate(sim::MCVISimulator, pomdp::POMDPs.POMDP, policy::MCVIPolicy, updater::MCVIUpdater, initial_node::MCVINode, init_state=nothing)
     sum_reward::Reward = 0
