@@ -6,7 +6,7 @@ function test_backup()
     # s0 = initialstate(p)
     # sim = MCVISimulator(MersenneTwister(420), s0, 1)
     scratch = MCVI.Scratch(Vector{Float64}(undef, 50), zeros(50), zeros(50), zeros(50, 2))
-    sim = MCVISimulator()
+    sim = MCVISimulator(rng=MersenneTwister(420))
 
     n, _ = MCVI.backup(b0, policy, sim, p, 500, 1000, 500, scratch)
     MCVI.addnode!(policy.updater, n)
