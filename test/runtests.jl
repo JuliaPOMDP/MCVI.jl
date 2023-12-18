@@ -3,8 +3,7 @@ using Test
 import MCVI: init_lower_action, lower_bound, upper_bound
 using POMDPs
 using Random
-using POMDPModelTools
-using POMDPSimulators
+using POMDPTools
 using POMDPModels # for LightDark1d
 using POMDPLinter: @requirements_info, @show_requirements
 
