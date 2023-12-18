@@ -16,18 +16,18 @@ mutable struct LightDark1DUpperBound
     rng::AbstractRNG
 end
 
-function lower_bound(lb::LightDark1DLowerBound, p::LightDark1D, s::LightDark1DState)
-    r = @gen(:r)(p, s, init_lower_action(p), lb.rng)
+function MCVI.init_lower_action(p::LightDark1D)
+    return 0
+end
+
+function MCVI.lower_bound(lb::LightDark1DLowerBound, p::LightDark1D, s::LightDark1DState)
+    r = @gen(:r)(p, s, MCVI.init_lower_action(p), lb.rng)
     return r * discount(p)
 end
 
-function upper_bound(ub::LightDark1DUpperBound, p::LightDark1D, s::LightDark1DState)
+function MCVI.upper_bound(ub::LightDark1DUpperBound, p::LightDark1D, s::LightDark1DState)
     steps = abs(s.y)/p.step_size + 1
     return p.correct_r*(discount(p)^steps)
-end
-
-function init_lower_action(p::LightDark1D)
-    return 0 # Worst? This depends on the initial state? XXX
 end
 
 include("test_policy.jl")
