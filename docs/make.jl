@@ -1,9 +1,20 @@
-using Documenter, MCVI
+using Documenter
+using MCVI
+using POMDPs
+using POMDPModels
+using Random
 
-makedocs(modules=MCVI)
+makedocs(
+    sitename = "MCVI.jl",
+    authors = "Jayesh K. Gupta",
+    modules = [MCVI],
+    format = Documenter.HTML(),
+    # doctest = false,
+    checkdocs = :none,
+    
+)
 
 deploydocs(
            repo   = "github.com/JuliaPOMDP/MCVI.jl.git",
-           julia  = "0.5",
-           osname = "linux"
-           )
+           versions = ["stable" => "v^", "v#.#"]
+)

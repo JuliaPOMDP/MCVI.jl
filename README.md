@@ -2,6 +2,7 @@
 
 [![CI](https://github.com/JuliaPOMDP/MCVI.jl/actions/workflows/CI.yml/badge.svg)](https://github.com/JuliaPOMDP/MCVI.jl/actions/workflows/CI.yml)
 [![codecov.io](http://codecov.io/github/JuliaPOMDP/MCVI.jl/coverage.svg?branch=master)](http://codecov.io/github/JuliaPOMDP/MCVI.jl?branch=master)
+[![](https://img.shields.io/badge/docs-stable-blue.svg)](https://JuliaPOMDP.github.io/MCVI.jl/stable)
 
 The Monte Carlo Value Iteration (MCVI) offline solver for `POMDPs.jl`.
 
@@ -12,12 +13,10 @@ Bai, H., Hsu, D., & Lee, W. S. (2014). Integrated perception and planning in the
 ## Installation
 
 ```julia
-using POMDPs
-POMDPs.add_registry()
-import Pkg
+using Pkg
 Pkg.add("MCVI")
 ```
 
-## Documentation
+## Example
 
-See [here](http://juliapomdp.github.io/MCVI.jl/)
+Reference the docs for an example using `LightDark1D`.

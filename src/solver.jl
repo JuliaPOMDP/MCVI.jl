@@ -22,23 +22,25 @@ mutable struct ActionNode{O,A} <: TreeNode
 end
 
 """
+    MCVISolver <: POMDPs.Solver
+        
+The MCVI solver is a solver for POMDPs that uses Monte Carlo Value Iteration to solve the problem. 
+    Described in Bai, H., Hsu, D., & Lee, W. S. (2014). Integrated perception and planning in the continuous space: A POMDP approach. *The International Journal of Robotics Research*, 33(9), 1288-1302.
+    
+# Fields
+- `simulater::POMDPs.Simulator`
+- `root::Union{BeliefNode, Nothing}`
+- `n_iter::Int64`: Number of iterations
+- `num_particles::Int64`: Number of belief particles to be used
+- `obs_branch::Int64`: Branching factor (previous default: 8)
+- `num_state::Int64`: Number of states to sample from belief (previous default: 500)
+- `num_prune_obs::Int64`: Number of times to sample observation while pruning alpha edges (previous default: 1000)
+- `num_eval_belief::Int64`: Number of times to simulate while evaluating belief (previous default: 5000)
+- `num_obs::Int64`: Number of observations to sample while evaluating belief (previous default: 50)
+- `lbound::Any`: An object representing the lower bound. The function `MCVI.lower_bound(lbound, problem, s)` will be called to get the lower bound for the state `s` - this function needs to be implemented for the solver to work.
+- `ubound::Any`: An object representing the upper bound. The function `MCVI.upper_bound(ubound, problem, s)` will be called to get the lower bound for the state `s` - this function needs to be implemented for the solver to work.
 
-Hyperparameters:
-
-- `n_iter`          : Number of iterations
-- `num_particles`   : Number of belief particles to be used
-- `obs_branch`      : Branching factor [default 8?]
-- `num_state`       : Number of states to sample from belief [default 500?]
-- `num_prune_obs`   : Number of times to sample observation while pruning alpha edges [default 1000?]
-- `num_eval_belief` : Number of times to simulate while evaluating belief [default 5000?]
-- `num_obs`         : [default 50?]
-
-Bounds:
-
-- `lbound`          : An object representing the lower bound. The function `MCVI.lower_bound(lbound, problem, s)` will be called to get the lower bound for the state `s` - this function needs to be implemented for the solver to work.
-- `ubound`          : An object representing the upper bound. The function `MCVI.upper_bound(ubound, problem, s)` will be called to get the lower bound for the state `s` - this function needs to be implemented for the solver to work.
-
-See `$(joinpath(dirname(pathof(MCVI)),"..", "test","runtests.jl"))` for an example of bounds implemented for the Light Dark problem.
+Reference the docs for an example of bounds implemented for the Light Dark problem.
 """
 mutable struct MCVISolver <: POMDPs.Solver
     simulator::POMDPs.Simulator

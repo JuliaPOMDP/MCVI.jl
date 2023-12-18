@@ -16,18 +16,18 @@ mutable struct LightDark1DUpperBound
     rng::AbstractRNG
 end
 
-function lower_bound(lb::LightDark1DLowerBound, p::LightDark1D, s::LightDark1DState)
-    r = @gen(:r)(p, s, init_lower_action(p), lb.rng)
+function MCVI.init_lower_action(p::LightDark1D)
+    return 0
+end
+
+function MCVI.lower_bound(lb::LightDark1DLowerBound, p::LightDark1D, s::LightDark1DState)
+    r = @gen(:r)(p, s, MCVI.init_lower_action(p), lb.rng)
     return r * discount(p)
 end
 
-function upper_bound(ub::LightDark1DUpperBound, p::LightDark1D, s::LightDark1DState)
+function MCVI.upper_bound(ub::LightDark1DUpperBound, p::LightDark1D, s::LightDark1DState)
     steps = abs(s.y)/p.step_size + 1
     return p.correct_r*(discount(p)^steps)
-end
-
-function init_lower_action(p::LightDark1D)
-    return 0 # Worst? This depends on the initial state? XXX
 end
 
 include("test_policy.jl")
@@ -47,6 +47,21 @@ include("test_solve.jl")
 @test test_solve()
 
 include("test_simulation.jl")
+@testset "MCVISimulator" begin
+   @test test_simulation()
+   mcvi_sim = MCVISimulator()
+   @test mcvi_sim.times == 1
+   @test mcvi_sim.display == false
+   @test mcvi_sim.rng == Random.GLOBAL_RNG
+   mcvi_sim = MCVISimulator(MersenneTwister(42))
+   @test mcvi_sim.times == 1
+   @test mcvi_sim.display == false
+   @test mcvi_sim.rng == MersenneTwister(42)
+   mcvi_sim = MCVISimulator(rng=MersenneTwister(42), times=10, display=true)
+   @test mcvi_sim.times == 10
+   @test mcvi_sim.display == true
+   @test mcvi_sim.rng == MersenneTwister(42)    
+end
 test_simulation()
 
 include("test_requirements.jl")
