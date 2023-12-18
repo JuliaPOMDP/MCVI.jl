@@ -4,7 +4,7 @@ mutable struct MCVISimulator <: POMDPs.Simulator
     times::Integer
     display::Bool
 end
-MCVISimulater(rng::AbstractRNG) = MCVISimulator(rng, 1, false)
+MCVISimulator(rng::AbstractRNG) = MCVISimulator(rng, 1, false)
 function MCVISimulator(; 
     rng::AbstractRNG=Random.GLOBAL_RNG,
     times::Integer=1,

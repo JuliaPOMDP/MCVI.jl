@@ -47,6 +47,21 @@ include("test_solve.jl")
 @test test_solve()
 
 include("test_simulation.jl")
+@testset "MCVISimulator" begin
+   @test test_simulation()
+   mcvi_sim = MCVISimulator()
+   @test mcvi_sim.times == 1
+   @test mcvi_sim.display == false
+   @test mcvi_sim.rng == Random.GLOBAL_RNG
+   mcvi_sim = MCVISimulator(MersenneTwister(42))
+   @test mcvi_sim.times == 1
+   @test mcvi_sim.display == false
+   @test mcvi_sim.rng == MersenneTwister(42)
+   mcvi_sim = MCVISimulator(rng=MersenneTwister(42), times=10, display=true)
+   @test mcvi_sim.times == 10
+   @test mcvi_sim.display == true
+   @test mcvi_sim.rng == MersenneTwister(42)    
+end
 test_simulation()
 
 include("test_requirements.jl")
