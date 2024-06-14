@@ -1,7 +1,7 @@
 name = "MCVI"
 uuid = "30d33687-f7ed-5b0d-8b26-3dc9b7abd572"
 repo = "https://github.com/JuliaPOMDP/MCVI.jl"
-version = "0.3.3"
+version = "0.3.4"
 
 [deps]
 Distributed = "8ba89e20-285c-5b6f-9357-94700520ee1b"
@@ -17,7 +17,7 @@ Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 [compat]
 JSON = "0.21"
 POMDPLinter = "0.1"
-POMDPs = "0.9"
+POMDPs = "0.9, 1"
 ParticleFilters = "0.5"
 Statistics = "1"
 julia = "1"
